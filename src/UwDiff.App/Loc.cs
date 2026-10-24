@@ -45,6 +45,13 @@ public static class Loc
         ["IgnoreAllSpace"] = ("空白をすべて無視", "Ignore all whitespace"),
         ["IgnoreCase"] = ("大文字・小文字を無視", "Ignore case"),
         ["Unordered"] = ("順番を問わない", "Ignore order"),
+        ["Include"] = ("含める", "Include"),
+        ["Exclude"] = ("除く", "Exclude"),
+        ["IncludePlaceholder"] = ("例: **/*.csv,**/*.log", "e.g. **/*.csv,**/*.log"),
+        ["ExcludePlaceholder"] = ("例: .git,*.tmp", "e.g. .git,*.tmp"),
+        ["TipInclude"] = ("比べるファイル（uvf のファイルの指定と同じ書き方。-include）\n・区切りはカンマ（無ければ空白）\n・* ? はフォルダをまたがない、** は何段でも、{a,b} は a か b\n・*.csv は直下だけ、**/*.csv は下の階層も\n・空ならすべて", "Files to compare (same syntax as uvf file specifications; -include)\n- separate with commas (or spaces if there is no comma)\n- * and ? do not cross folders, ** spans any depth, {a,b} means a or b\n- *.csv = top folder only, **/*.csv = all subfolders too\n- empty = all files"),
+        ["TipExclude"] = ("除くファイル・フォルダ（uvf の除外と同じ .gitignore の書き方。-exclude）\n・区切りはカンマ（無ければ空白）\n・/ が無ければどの深さの名前にも当たる（.git・*.tmp）\n・末尾の / はフォルダだけ、先頭の / は直下から、! で取り消し\n・フォルダに当たれば、その下をすべて除く", "Files / folders to skip (same .gitignore syntax as uvf exclusions; -exclude)\n- separate with commas (or spaces if there is no comma)\n- a pattern without / matches a name at any depth (.git, *.tmp)\n- trailing / = folders only, leading / = top folder, ! negates\n- a matching folder is skipped entirely"),
+        ["TipFolderOnly"] = ("旧と新にフォルダを指定したときだけ使える", "Available only when both old and new are folders"),
         ["Compare"] = ("比べる", "Compare"),
         // ツールチップ
         ["TipOld"] = ("比べる元（旧）のファイルかフォルダ。窓へ 2 つ落とすと旧・新に入る", "The old file or folder. Drop two files on the window to fill both"),

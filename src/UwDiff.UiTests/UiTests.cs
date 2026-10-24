@@ -300,6 +300,44 @@ public class UiTests
     }
 
     [AvaloniaFact]
+    public async Task フォルダのときだけ含める除くを使える()
+    {
+        Loc.Set(true);
+        string a = Path.Combine(Work, "incA"), b = Path.Combine(Work, "incB");
+        foreach (string d in new[] { a, b }) { Directory.CreateDirectory(Path.Combine(d, ".git")); Directory.CreateDirectory(Path.Combine(d, "sub")); }
+        File.WriteAllText(Path.Combine(a, "x.csv"), "1\n"); File.WriteAllText(Path.Combine(b, "x.csv"), "2\n");
+        File.WriteAllText(Path.Combine(a, "y.log"), "1\n"); File.WriteAllText(Path.Combine(b, "y.log"), "2\n");
+        File.WriteAllText(Path.Combine(a, "z.txt"), "1\n"); File.WriteAllText(Path.Combine(b, "z.txt"), "2\n");
+        File.WriteAllText(Path.Combine(a, ".git", "HEAD"), "1"); File.WriteAllText(Path.Combine(b, ".git", "HEAD"), "2");
+        File.WriteAllText(Path.Combine(a, "sub", "w.tmp"), "1"); File.WriteAllText(Path.Combine(b, "sub", "w.tmp"), "2");
+        var w = Open();
+        // ファイルのときは入力できない
+        w._old.Text = Path.Combine(a, "x.csv");
+        w._new.Text = Path.Combine(b, "x.csv");
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(w._include.IsEnabled);
+        Assert.False(w._exclude.IsEnabled);
+        Assert.Equal("旧と新にフォルダを指定したときだけ使える", ToolTip.GetTip(w._include));
+        // 片方だけフォルダでも入力できない
+        w._old.Text = a;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(w._include.IsEnabled);
+        // 両方フォルダなら入力でき、比べるときに渡す
+        w._new.Text = b;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(w._include.IsEnabled);
+        Assert.True(w._exclude.IsEnabled);
+        w._include.Text = "*.csv;*.log;*.tmp";
+        w._exclude.Text = ".git;sub";
+        await w.CompareAsync(w._old.Text, w._new.Text);
+        var v = Current<FolderDiffView>(w);
+        await WaitUntil(() => v._list.ItemCount == 2, "含める・除くが効かない");   // x.csv・y.log だけ（z.txt は含めず、.git・sub は除く）
+        Assert.Contains("違う 2", v._summary.Text);
+        Shot(w, "folder_include");
+        w.Close();
+    }
+
+    [AvaloniaFact]
     public async Task 比べられないときは理由を出す()
     {
         var w = Open();

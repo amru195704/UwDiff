@@ -31,10 +31,12 @@ public sealed class FolderDiffOptions
 {
     public required string OldDir { get; init; }
     public required string NewDir { get; init; }
-    /// <summary>比べるファイルの名前の型（"*.csv;*.log" のように ; 区切り。null ならすべて）。</summary>
+    /// <summary>比べるファイル（uvf のファイルの指定と同じ書き方。"*.csv,**/*.log" など。null ならすべて）。<see cref="PathFilter"/>。</summary>
     public string? Include { get; init; }
-    /// <summary>除くファイル・フォルダの名前の型（".git;*.tmp"。フォルダの名前に合えば、その下をすべて除く）。</summary>
+    /// <summary>除くファイル・フォルダ（.gitignore と同じ書き方。".git,*.tmp" など。フォルダに当たれば、その下をすべて除く）。</summary>
     public string? Exclude { get; init; }
+    /// <summary>除外の規則のファイル（uvf の --ignore-file と同じ。.gitignore と同じ書き方）。</summary>
+    public IReadOnlyList<string>? IgnoreFiles { get; init; }
     /// <summary>中身を同時に比べるファイルの数（0 なら CPU の数から）。</summary>
     public int Workers { get; init; }
     public Action<long, long>? Progress { get; init; }
@@ -63,8 +65,8 @@ public static class FolderDiff
     {
         var sw = Stopwatch.StartNew();
         var res = new FolderDiffResult();
-        string[] inc = Patterns(o.Include), exc = Patterns(o.Exclude);
-        Dictionary<string, FileInfo> olds = List(o.OldDir, inc, exc), news = List(o.NewDir, inc, exc);
+        var filter = new PathFilter(o.Include, o.Exclude, o.IgnoreFiles);
+        Dictionary<string, FileInfo> olds = List(o.OldDir, filter), news = List(o.NewDir, filter);
 
         var both = new List<(string Rel, FileInfo A, FileInfo B)>();
         var entries = new List<FolderEntry>();
@@ -115,20 +117,10 @@ public static class FolderDiff
         return res;
     }
 
-    private static string[] Patterns(string? s) =>
-        string.IsNullOrWhiteSpace(s) ? Array.Empty<string>() : s.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    private static bool Matches(string name, string[] patterns)
-    {
-        foreach (string p in patterns)
-            if (FileSystemName.MatchesSimpleExpression(p, name, ignoreCase: !OperatingSystem.IsLinux())) return true;
-        return false;
-    }
-
     /// <summary>フォルダの下のファイル（相対パス → 情報）。除くフォルダの下には入らない。リンク先のフォルダはたどらない。</summary>
-    private static Dictionary<string, FileInfo> List(string dir, string[] inc, string[] exc)
+    private static Dictionary<string, FileInfo> List(string dir, PathFilter filter)
     {
-        var root = new DirectoryInfo(dir);
+        var root = new DirectoryInfo(Path.GetFullPath(dir));
         if (!root.Exists) throw new DirectoryNotFoundException(dir);
         var map = new Dictionary<string, FileInfo>(NameComparer);
         var opts = new EnumerationOptions { RecurseSubdirectories = false, IgnoreInaccessible = true, AttributesToSkip = 0, ReturnSpecialDirectories = false };
@@ -139,14 +131,15 @@ public static class FolderDiff
             var (d, rel) = stack.Pop();
             foreach (FileSystemInfo e in d.EnumerateFileSystemInfos("*", opts))
             {
-                if (exc.Length > 0 && Matches(e.Name, exc)) continue;
+                bool isDir = e is DirectoryInfo;
+                if (filter.Excluded(root.FullName, e.FullName, isDir)) continue;
                 string r = rel.Length == 0 ? e.Name : rel + "/" + e.Name;
                 if (e is DirectoryInfo sub)
                 {
                     if ((sub.Attributes & FileAttributes.ReparsePoint) == 0) stack.Push((sub, r));
                     continue;
                 }
-                if (inc.Length > 0 && !Matches(e.Name, inc)) continue;
+                if (!filter.Included(root.FullName, e.FullName)) continue;
                 map[r] = (FileInfo)e;
             }
         }

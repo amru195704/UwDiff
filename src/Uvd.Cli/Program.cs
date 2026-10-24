@@ -48,8 +48,12 @@ public static class Program
           （試験用: -block MB・-workers N・-shards N・-serial・-parseonly）
 
         フォルダの比較:
-          -include 型          比べるファイル（例 "*.csv;*.log"。既定はすべて）
-          -exclude 型          除くファイル・フォルダ（例 "*.tmp;.git"）
+          -include 指定        比べるファイル（uvf のファイルの指定と同じ書き方。例 "*.csv,**/*.log"。既定はすべて）
+                               区切りはカンマ（無ければ空白）。* ? はフォルダをまたがない・** は何段でも・{a,b} は a か b
+                               フォルダから見たパスに当てる: *.csv は直下だけ、**/*.csv は下の階層も
+          -exclude 指定        除くファイル・フォルダ（uvf の除外と同じ .gitignore の書き方。例 ".git,*.tmp"）
+                               / が無ければどの深さの名前にも当たる・末尾 / はフォルダだけ・! で取り消し
+          --ignore-file ファイル  除外の規則をファイルから足す（何回でも。.gitignore と同じ書き方。uvf と同じ）
           -detail フォルダ     中身が違うファイルの差分を 1 本ずつ書く（テキストは .diff、-key があれば表の .csv）
 
         反映のオプション:
@@ -248,6 +252,7 @@ public sealed class CliArgs
 {
     public readonly List<string> Positional = new();
     public readonly List<string> Keys = new();
+    public readonly List<string> IgnoreFiles = new();
     public readonly Program.FormatOptions Format = new();
     public string? OutPath, JsonPath, TempDir, DetailDir, Include, Exclude;
     public int Block = 32, Workers, Shards, Context = 3;
@@ -294,6 +299,7 @@ public sealed class CliArgs
                 case "-detail": c.DetailDir = Next(); break;
                 case "-include": c.Include = Next(); break;
                 case "-exclude": c.Exclude = Next(); break;
+                case "--ignore-file" or "-ignore-file": c.IgnoreFiles.Add(Next()); break;
                 case "-block": c.Block = Int(); break;
                 case "-workers": c.Workers = Int(); break;
                 case "-shards": c.Shards = Int(); break;

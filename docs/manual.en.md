@@ -23,6 +23,7 @@ No separate .NET installation is needed. To use the CLI from anywhere, add its f
    - Enter **key columns** (e.g. `点名`, or `点名,種別` for several) to compare as tables (CSV, TSV, Excel). Leave it empty to compare as text.
    - "Ignore amount of whitespace", "Ignore all whitespace" and "Ignore case" apply to text comparison.
    - "Ignore order" compares which lines were added or removed, regardless of their order.
+   - When **both** old and new are folders, enter specifications in "Include" (right of the old row) and "Exclude" (right of the new row), e.g. `**/*.csv,**/*.log` and `.git,*.tmp` — the same as `-include` / `-exclude` in the CLI, with the same syntax as uvf / uvp (see 3-5). They are disabled for files.
 3. Click "比べる" (Compare). Each result opens in a tab.
 
 **Menus, language and command line**: on macOS the menu bar has **UwDiff**, **File** and **Help**; on Windows and Linux the same menus are at the top of the window
@@ -93,7 +94,15 @@ that do not exist in OLD are **not applied and reported** (exit code 1).
 
 ### 3-5. Folders
 
-`uvd before/ after/ -include "*.csv;*.log" -exclude ".git;*.tmp" -o list.csv -detail diffs/ [-key ID]`
+`uvd before/ after/ -include "**/*.{csv,log}" -exclude ".git,*.tmp" -o list.csv -detail diffs/ [-key ID]` (also `--ignore-file rules.txt`)
+
+- **Include** (`-include`) uses **the same syntax as uvf / uvp file specifications**: separate with commas (use commas for names with spaces), otherwise spaces;
+  `;` is treated like a comma. `*` and `?` do not cross folders, `**` spans any depth, `{a,b}` means a or b. Patterns are matched against the path relative to
+  each folder: `*.csv` = top folder only, `**/*.csv` = all subfolders too, `sub/**` = everything under sub. Empty = all files.
+- **Exclude** (`-exclude`) uses **the same .gitignore syntax as uvf exclusions (`--ignore-file`)**, one rule per item: a pattern without `/` matches a name at any depth,
+  a trailing `/` matches folders only, a leading `/` anchors to the top folder, `!` negates; a matching folder is skipped entirely.
+  `--ignore-file FILE` adds rules from a .gitignore-style file (repeatable; later files win; weaker than `-exclude`).
+- Matching is case-sensitive (as in uvf and git). Unlike uvf, `.gitignore` / `.ignore` and hidden files are not skipped by default.
 
 Files are paired by relative path (case-insensitive on Windows and macOS). Different sizes mean "different"; equal sizes are compared byte by byte,
 in parallel. `-detail` writes a diff for each different file (`.diff` for text, `.csv` for tables when `-key` is given).

@@ -198,7 +198,7 @@ put(A, 'only_old.txt', 'x'); put(B, 'sub/only_new.txt', 'y')
 put(A, '.git/HEAD', 'ref'); put(B, '.git/HEAD', 'other')
 put(A, 'skip.tmp', '1'); put(B, 'skip.tmp', '2')
 put(A, 'table/points.csv', '点名,X\nP1,1\nP2,2\n'); put(B, 'table/points.csv', '点名,X\nP2,2.5\nP1,1\nP3,3\n')
-p = run(A, B, '-exclude', '.git;*.tmp', '-o', f'{WORK}/folder.csv', '-json', f'{WORK}/folder.json', '-detail', f'{WORK}/detail', '-key', '点名')
+p = run(A, B, '-exclude', '.git,*.tmp', '-o', f'{WORK}/folder.csv', '-json', f'{WORK}/folder.json', '-detail', f'{WORK}/detail', '-key', '点名')
 want = {('違う', f'logs/{i // 50:02d}/app_{i:03d}.log') for i in range(300) if i % 37 == 0}
 want |= {('違う', 'same_size.txt'), ('旧だけ', 'only_old.txt'), ('新だけ', 'sub/only_new.txt'), ('違う', 'table/points.csv')}
 got = set()
@@ -214,9 +214,40 @@ report('フォルダ（除く .git・*.tmp）', ok, f'違い {len(got)}/{len(wan
 ok1, _ = check_unified(f'{A}/logs/00/app_037.log', f'{B}/logs/00/app_037.log', f'{WORK}/detail/logs/00/app_037.log.diff')
 ok2 = os.path.exists(f'{WORK}/detail/table/points.csv.csv') and len(open(f'{WORK}/detail/table/points.csv.csv', encoding='utf-8').read().splitlines()) == 1 + 2
 report('フォルダの明細（.diff と表の .csv）', ok1 and ok2 and j.get('detailed') == len([x for x in want if x[0] == '違う']))
-p = run(A, B, '-include', '*.csv', '-o', f'{WORK}/folder_csv.csv')
+p = run(A, B, '-include', '**/*.csv', '-o', f'{WORK}/folder_csv.csv')
 rows_inc = list(csv.reader(open(f'{WORK}/folder_csv.csv', encoding='utf-8')))[1:] if p.returncode in (0, 1) else []
-report('フォルダ（含める *.csv だけ）', [(x[0], x[1]) for x in rows_inc] == [('違う', 'table/points.csv')])
+report('フォルダ（含める **/*.csv）', [(x[0], x[1]) for x in rows_inc] == [('違う', 'table/points.csv')])
+
+# 含める・除くの書き方（uvf / uvp と同じ。含める＝ファイルの指定、除く＝.gitignore）
+C, D = f'{WORK}/spec_old', f'{WORK}/spec_new'
+for root in (C, D):
+    for rel in ('a.csv', 'b.log', 'c.txt', 'sub/d.csv', 'sub/e.log', 'sub/deep/f.csv', 'build/g.csv', 'keep/build', 'my dir/h.csv', '.git/HEAD'):
+        put(root, rel, root + rel)       # 旧と新で中身が違う（どれも「違う」になる）
+def listed(*args):
+    p = run(C, D, '-o', f'{WORK}/spec.csv', *args)
+    if p.returncode not in (0, 1): return [f'終了コード {p.returncode} {p.stderr.strip()}']
+    return sorted(x[1] for x in list(csv.reader(open(f'{WORK}/spec.csv', encoding='utf-8')))[1:] if x[0] != '同じ')
+cases = [
+    ('含める *.csv は直下だけ', ['-include', '*.csv'], ['a.csv']),
+    ('含める **/*.csv は下の階層も', ['-include', '**/*.csv'], ['a.csv', 'build/g.csv', 'my dir/h.csv', 'sub/d.csv', 'sub/deep/f.csv']),
+    ('含める {a,b}（*.{csv,log}）', ['-include', '*.{csv,log}'], ['a.csv', 'b.log']),
+    ('含める 空白区切り', ['-include', '*.csv sub/*.log'], ['a.csv', 'sub/e.log']),
+    ('含める カンマ区切り（空白を含む名前）', ['-include', 'my dir/*.csv,c.txt'], ['c.txt', 'my dir/h.csv']),
+    ('含める ; 区切り（以前の書き方）', ['-include', '*.csv;*.txt'], ['a.csv', 'c.txt']),
+    ('含める sub/** はフォルダの下すべて', ['-include', 'sub/**'], ['sub/d.csv', 'sub/deep/f.csv', 'sub/e.log']),
+    ('除く 名前はどの深さにも（*.log）', ['-include', '**/*', '-exclude', '*.log,.git'], ['a.csv', 'build/g.csv', 'c.txt', 'keep/build', 'my dir/h.csv', 'sub/d.csv', 'sub/deep/f.csv']),
+    ('除く 末尾 / はフォルダだけ（build/）', ['-exclude', 'build/,.git'], ['a.csv', 'b.log', 'c.txt', 'keep/build', 'my dir/h.csv', 'sub/d.csv', 'sub/deep/f.csv', 'sub/e.log']),
+    ('除く 先頭 / は直下から（/sub/deep）', ['-exclude', '/sub/deep .git'], ['a.csv', 'b.log', 'build/g.csv', 'c.txt', 'keep/build', 'my dir/h.csv', 'sub/d.csv', 'sub/e.log']),
+    ('除く ! で取り消し（*.csv を除くが a.csv は残す）', ['-exclude', '*.csv,!a.csv,.git'], ['a.csv', 'b.log', 'c.txt', 'keep/build', 'sub/e.log']),
+]
+for name, args, want in cases:
+    got = listed(*args)
+    report(f'フォルダの指定: {name}', got == want, '' if got == want else f'得た {got}')
+ign = f'{WORK}/my.ignore'
+open(ign, 'w', encoding='utf-8').write('# uvf の --ignore-file と同じ書き方\n*.log\nsub/\n.git\n')
+got = listed('--ignore-file', ign)
+want = ['a.csv', 'build/g.csv', 'c.txt', 'keep/build', 'my dir/h.csv']
+report('フォルダの指定: --ignore-file（.gitignore の書き方のファイル）', got == want, '' if got == want else f'得た {got}')
 
 print('すべて一致' if all(results) else '不一致あり')
 sys.exit(0 if all(results) else 1)

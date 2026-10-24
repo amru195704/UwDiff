@@ -30,6 +30,15 @@ public sealed class MainWindow : Window
     private readonly NativeMenuBar _menuBar = new();
     internal readonly ComboBox _lang = new() { ItemsSource = new[] { "日本語", "English" }, Width = 120 };
     private readonly List<(TextBlock Label, Button File, Button Folder, bool IsOld)> _pathRows = new();
+    /// <summary>フォルダどうしを比べるときの、含める・除く名前の型（-include・-exclude）。旧・新がどちらもフォルダのときだけ入力できる。</summary>
+    internal readonly TextBox _include = new() { Width = 240, Margin = new Thickness(6, 2) };
+    internal readonly TextBox _exclude = new() { Width = 240, Margin = new Thickness(6, 2) };
+    private readonly TextBlock _includeLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+    private readonly TextBlock _excludeLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+
+    /// <summary>旧・新がどちらもフォルダか（含める・除くを使えるのはこのときだけ）。</summary>
+    internal bool FolderMode => IsDir(_old.Text) && IsDir(_new.Text);
+    private static bool IsDir(string? p) => !string.IsNullOrWhiteSpace(p) && Directory.Exists(p.Trim());
     internal string TempDir { get; } = Path.Combine(Path.GetTempPath(), $"uwdiff-{Environment.ProcessId}");
 
     private static TextBox PathBox() => new() { Margin = new Thickness(6, 2) };
@@ -41,9 +50,20 @@ public sealed class MainWindow : Window
         Height = 820;
         Directory.CreateDirectory(TempDir);
 
-        var paths = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto"), Margin = new Thickness(8, 8, 8, 0) };
+        // 旧・新の行の右に、含める（旧の行）・除く（新の行）。パスの欄はその分短くなる
+        var paths = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto"), Margin = new Thickness(8, 8, 8, 0) };
         AddPathRow(paths, 0, _old, true);
         AddPathRow(paths, 1, _new, false);
+        foreach (var (c, row, col) in new (Control, int, int)[] { (_includeLabel, 0, 4), (_include, 0, 5), (_excludeLabel, 1, 4), (_exclude, 1, 5) })
+        {
+            Grid.SetRow(c, row);
+            Grid.SetColumn(c, col);
+            paths.Children.Add(c);
+        }
+        ToolTip.SetShowOnDisabled(_include, true);
+        ToolTip.SetShowOnDisabled(_exclude, true);
+        _old.TextChanged += (_, _) => UpdateFolderMode();
+        _new.TextChanged += (_, _) => UpdateFolderMode();
         var opts = new WrapPanel { Margin = new Thickness(8, 4), Orientation = Orientation.Horizontal };
         _lang.SelectedIndex = Loc.Ja ? 0 : 1;
         _lang.SelectionChanged += (_, _) => { if (_lang.SelectedIndex >= 0) Loc.Set(_lang.SelectedIndex == 0); };
@@ -88,6 +108,7 @@ public sealed class MainWindow : Window
         }
 
         Texts();
+        UpdateFolderMode();
         Loc.Changed += Texts;
         Closed += (_, _) =>
         {
@@ -153,6 +174,11 @@ public sealed class MainWindow : Window
         ToolTip.SetTip(_unordered, Loc.T("TipUnordered"));
         ToolTip.SetTip(_compare, Loc.T("TipCompare"));
         ToolTip.SetTip(_lang, Loc.T("TipLangBox"));
+        _includeLabel.Text = Loc.T("Include");
+        _excludeLabel.Text = Loc.T("Exclude");
+        _include.PlaceholderText = Loc.T("IncludePlaceholder");
+        _exclude.PlaceholderText = Loc.T("ExcludePlaceholder");
+        UpdateFolderMode();
         if (_lang.SelectedIndex != (Loc.Ja ? 0 : 1)) _lang.SelectedIndex = Loc.Ja ? 0 : 1;
         foreach (TabItem t in _tabs.Items.OfType<TabItem>())
             if (t.Header is StackPanel { Children: [_, Button close] }) ToolTip.SetTip(close, Loc.T("TipCloseTab"));
@@ -285,6 +311,16 @@ public sealed class MainWindow : Window
         _status.Foreground = error ? Brushes.IndianRed : null;
     }
 
+    /// <summary>含める・除くは、旧・新がどちらもフォルダのときだけ入力できる（ツールチップで理由も出す）。</summary>
+    private void UpdateFolderMode()
+    {
+        bool on = FolderMode;
+        _include.IsEnabled = _exclude.IsEnabled = on;
+        _includeLabel.Opacity = _excludeLabel.Opacity = on ? 1 : 0.45;
+        ToolTip.SetTip(_include, Loc.T(on ? "TipInclude" : "TipFolderOnly"));
+        ToolTip.SetTip(_exclude, Loc.T(on ? "TipExclude" : "TipFolderOnly"));
+    }
+
     /// <summary>上で選んだ比べ方を uvd のオプションにする。</summary>
     private List<string> Options()
     {
@@ -294,6 +330,11 @@ public sealed class MainWindow : Window
         if (_w.IsChecked == true) args.Add("-w");
         if (_i.IsChecked == true) args.Add("-i");
         if (_unordered.IsChecked == true) args.Add("-unordered");
+        if (FolderMode)
+        {
+            if (!string.IsNullOrWhiteSpace(_include.Text)) { args.Add("-include"); args.Add(_include.Text.Trim()); }
+            if (!string.IsNullOrWhiteSpace(_exclude.Text)) { args.Add("-exclude"); args.Add(_exclude.Text.Trim()); }
+        }
         return args;
     }
 

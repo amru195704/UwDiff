@@ -24,6 +24,7 @@ internal static class FolderCommand
             NewDir = a.Positional[1],
             Include = a.Include,
             Exclude = a.Exclude,
+            IgnoreFiles = a.IgnoreFiles,
             Workers = a.Workers,
             Progress = a.Quiet ? null : (done, total) =>
             {

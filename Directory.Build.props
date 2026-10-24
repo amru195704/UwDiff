@@ -6,5 +6,12 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>UwDiff</Product>
     <Copyright>Copyright (c) 2026 amru195704 (Y4U)</Copyright>
+    <!-- ビルド番号＝コンパイル日時（ローカル時刻）を yy.MM.dd.HH に（UwView と同じ）。例: 26.10.24.15
+         そろえたいとき（配布物の画面と CLI など）は環境変数 UVD_BUILD_NUMBER=26.10.24.15 のように渡す -->
+    <BuildNumber>$([System.DateTime]::Now.ToString("yy.MM.dd.HH"))</BuildNumber>
+    <BuildNumber Condition="'$(UVD_BUILD_NUMBER)' != ''">$(UVD_BUILD_NUMBER)</BuildNumber>
   </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="BuildNumber" Value="$(BuildNumber)" />
+  </ItemGroup>
 </Project>

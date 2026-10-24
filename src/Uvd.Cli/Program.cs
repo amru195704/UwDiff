@@ -68,7 +68,7 @@ public static class Program
             if (args.Length > 0 && args[0] == "apply") return Apply.Run(args[1..]);
             if (args.Length == 1 && args[0] is "--version" or "-version")
             {
-                Console.WriteLine("uvd (UwDiff) " + Version);
+                Console.WriteLine($"uvd (UwDiff) {Version} (build {BuildNumber})");
                 return 0;
             }
             CliArgs a = CliArgs.Parse(args);
@@ -223,6 +223,11 @@ public static class Program
     public static string Version => typeof(Program).Assembly
         .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
         .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "?";
+
+    /// <summary>ビルド番号（Directory.Build.props の BuildNumber＝コンパイル日時 yy.MM.dd.HH）。</summary>
+    public static string BuildNumber => typeof(Program).Assembly
+        .GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+        .OfType<System.Reflection.AssemblyMetadataAttribute>().FirstOrDefault(m => m.Key == "BuildNumber")?.Value ?? "?";
 
     internal static string Mb(long b) => (b / 1048576.0).ToString("F0", CultureInfo.InvariantCulture) + " MB";
 

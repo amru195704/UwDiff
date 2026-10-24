@@ -34,7 +34,7 @@ public sealed class MainWindow : Window
 
     public MainWindow(string[] args)
     {
-        Title = "UwDiff " + Uvd.Cli.Program.Version;
+        Title = $"UwDiff {Uvd.Cli.Program.Version} (build {Uvd.Cli.Program.BuildNumber})";
         Width = 1280;
         Height = 820;
         Directory.CreateDirectory(_tempDir);

@@ -19,11 +19,14 @@ cd "$(dirname "$0")/.."
 VER=$(grep -oE '<InformationalVersion>[^<]+' Directory.Build.props | sed 's/<InformationalVersion>//' | head -1)
 : "${VER:=0.0.0}"
 NAME=UwDiff
+# 画面と CLI に同じビルド番号を入れる（Directory.Build.props が読む。無ければ今の日時）
+export UVD_BUILD_NUMBER="${UVD_BUILD_NUMBER:-$(date '+%y.%m.%d.%H')}"
+BUILD="${UVD_BUILD_NUMBER}"
 BUNDLE_ID="${BUNDLE_ID:-net.y42u.uwdiff}"
 OUT="${OUT:-out/dist}"
 RIDS=("$@"); [ ${#RIDS[@]} -eq 0 ] && RIDS=(osx-arm64 osx-x64 linux-x64 linux-arm64 win-x64 win-arm64)
 mkdir -p "$OUT"
-echo "$NAME $VER → ${RIDS[*]}"
+echo "$NAME $VER (build $BUILD) → ${RIDS[*]}"
 
 # 画面と CLI を、どちらも 1 本の実行ファイル（.NET 込み）にして同じフォルダに出す。
 # 1 本の中身を圧縮する設定（EnableCompressionInSingleFile）は使わない: .NET 10 の osx-arm64 で、圧縮した 1 本だけが
@@ -62,7 +65,7 @@ pack_mac() { # $1=rid $2=arch
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
   <key>CFBundleExecutable</key><string>UwDiff</string>
   <key>CFBundleShortVersionString</key><string>$VER</string>
-  <key>CFBundleVersion</key><string>$VER</string>
+  <key>CFBundleVersion</key><string>$BUILD</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>

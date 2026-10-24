@@ -106,7 +106,7 @@ internal sealed class Pacer
 /// </summary>
 internal sealed class FileReader
 {
-    private readonly string _path;
+    private readonly Func<Stream> _open;
     private readonly BlockPool _pool;
     private readonly int _reserve;
     private readonly int _payload;
@@ -117,12 +117,12 @@ internal sealed class FileReader
     private readonly int _side;
 
     /// <param name="bomLength">BOM の長さ。UTF-8 に直すときは読む側で飛ばす（バイト列のまま読むときは行に切る側で飛ばす）。</param>
-    public FileReader(string path, BlockPool pool, int reserve, int payload, Encoding? transcodeFrom, int bomLength, Pacer? pacer = null, int side = 0)
+    public FileReader(Func<Stream> open, BlockPool pool, int reserve, int payload, Encoding? transcodeFrom, int bomLength, Pacer? pacer = null, int side = 0)
     {
         _skip = transcodeFrom != null ? bomLength : 0;
         _pacer = pacer;
         _side = side;
-        _path = path;
+        _open = open;
         _pool = pool;
         _reserve = reserve;
         _payload = payload;
@@ -133,8 +133,8 @@ internal sealed class FileReader
     {
         try
         {
-            using var fs = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.SequentialScan);
-            if (_skip > 0) fs.Seek(_skip, SeekOrigin.Begin);
+            using Stream fs = _open();
+            if (_skip > 0) RowReader.Skip(fs, _skip);
             if (_transcodeFrom == null) ReadRaw(fs, output, ct);
             else ReadTranscoded(fs, output, ct);
         }
@@ -145,7 +145,7 @@ internal sealed class FileReader
         }
     }
 
-    private void ReadRaw(FileStream fs, BlockingCollection<Block> output, CancellationToken ct)
+    private void ReadRaw(Stream fs, BlockingCollection<Block> output, CancellationToken ct)
     {
         while (true)
         {
@@ -162,7 +162,7 @@ internal sealed class FileReader
         }
     }
 
-    private void ReadTranscoded(FileStream fs, BlockingCollection<Block> output, CancellationToken ct)
+    private void ReadTranscoded(Stream fs, BlockingCollection<Block> output, CancellationToken ct)
     {
         // UTF-8 にすると最大 3 倍（半角カナは CP932 の 1 バイト → UTF-8 の 3 バイト。UTF-16 は 1.5 倍）になるので、生で読む量を 1/3 にする
         int rawSize = _payload / 3 - 16;
@@ -188,7 +188,7 @@ internal sealed class FileReader
         }
     }
 
-    private static int ReadFully(FileStream fs, Span<byte> dest)
+    private static int ReadFully(Stream fs, Span<byte> dest)
     {
         int total = 0;
         while (total < dest.Length)

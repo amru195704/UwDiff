@@ -19,14 +19,22 @@ internal sealed class DiffSink : IDisposable
     private readonly Encoding _enc;
     private readonly bool _encIsUtf8;
     private readonly Func<string> _newPath;
+    private readonly byte[]? _extra;   // 区分の次に足す列（「,値」の形。CSV として書ける形にしたもの）
     private FileStream? _file;
     private char[] _chars = new char[1024];
     private byte[] _tmp = new byte[4096];
 
     public long Added, Deleted, ChangedRows, ChangedCells, SameRows;
 
-    public DiffSink(bool enabled, Encoding workEncoding, bool workIsUtf8, Func<string> newPath)
+    public DiffSink(bool enabled, Encoding workEncoding, bool workIsUtf8, Func<string> newPath, string? extraColumn = null)
     {
+        if (extraColumn != null)
+        {
+            var w = new ArrayBufferWriter<byte>();
+            w.Write(","u8);
+            CsvBytes.WriteField(w, Encoding.UTF8.GetBytes(extraColumn), (byte)',');
+            _extra = w.WrittenSpan.ToArray();
+        }
         _enabled = enabled;
         _enc = workEncoding;
         _encIsUtf8 = workIsUtf8;
@@ -38,6 +46,7 @@ internal sealed class DiffSink : IDisposable
         if (added) Added++; else Deleted++;
         if (!_enabled) return;
         Put(added ? KindAdded : KindDeleted);
+        if (_extra != null) Put(_extra);
         PutKey(row, keyParts);
         Put(",,,\n"u8);
         MaybeSpill();
@@ -49,6 +58,7 @@ internal sealed class DiffSink : IDisposable
         ChangedCells++;
         if (!_enabled) return;
         Put(KindChanged);
+        if (_extra != null) Put(_extra);
         PutKey(row, keyParts);
         PutByte((byte)',');
         CsvBytes.WriteField(_buf, columnNameUtf8, (byte)',');

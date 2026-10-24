@@ -2,5 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/UwDiff.Core/UwDiff.Core.csproj" />
     <Project Path="src/Uvd.Cli/Uvd.Cli.csproj" />
+    <Project Path="src/UwView.Formats/UwView.Formats.csproj" />
+    <Project Path="src/UwDiff.App/UwDiff.App.csproj" />
+    <Project Path="src/UwDiff.UiTests/UwDiff.UiTests.csproj" />
   </Folder>
 </Solution>

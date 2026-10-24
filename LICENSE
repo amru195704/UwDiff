@@ -1,0 +1,147 @@
+UwDiff License
+
+Copyright (c) 2026 amru195704 (Y4U)
+
+Summary (this summary is NOT a substitute for the full license text below):
+- Free for INTERNAL USE by individuals and companies (internal business operations).
+- You may NOT distribute the software: redistribution, bundling into a product or
+  service, resale, hosting/offering to third parties, or OEM embedding are NOT
+  permitted under this license.
+- Exception: the official, unmodified binary releases MAY be redistributed
+  free of charge as packages (Flathub, Snap, AUR, distro repositories,
+  Homebrew, Scoop, winget, ...). See "Additional Permission" below.
+- Those uses require a separate COMMERCIAL (redistribution/OEM) license from the author.
+
+Software: UwDiff — https://github.com/amru195704/UwDiff
+Commercial / redistribution licensing: https://github.com/amru195704/UwDiff/issues
+SPDX-License-Identifier: PolyForm-Internal-Use-1.0.0
+(with an additional packaging permission — see "Additional Permission")
+
+------------------------------------------------------------------------------
+
+Additional Permission: Packaging of Official Binaries
+
+In addition to the licenses granted under the PolyForm Internal Use
+License 1.0.0 below, which this permission does not otherwise modify,
+the licensor grants you permission to redistribute the official binary
+releases of the software, free of charge, as packages in software
+repositories, package managers and app stores (for example Flathub,
+the Snap Store, the AUR, Linux distribution repositories, Homebrew,
+Scoop and winget), on these conditions:
+
+1. The files are the official release files published at
+   https://github.com/amru195704/UwDiff/releases, and the program files
+   are not modified. Unpacking them, placing them in the package's
+   layout, and adding desktop entries, icons, metadata or launcher
+   scripts are allowed.
+2. The SHA-256 hash of each file matches the SHA256SUMS file published
+   with that release.
+3. The package includes this LICENSE file or links to it, and states
+   that the software is not open source software.
+4. The package does not suggest that it is made or endorsed by the
+   licensor, unless the licensor has said so.
+5. No fee is charged for the software itself.
+
+This permission does not cover the source code, modified or rebuilt
+binaries, or bundling the software into another product or service.
+Those still require a separate commercial license from the licensor.
+Anyone who installs such a package receives the software under these
+same terms.
+
+==============================================================================
+
+# PolyForm Internal Use License 1.0.0
+
+<https://polyformproject.org/licenses/internal-use/1.0.0>
+
+## Acceptance
+
+In order to get any license under these terms, you must agree
+to them as both strict obligations and conditions to all
+your licenses.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software
+to do everything you might do with the software that would
+otherwise infringe the licensor's copyright in it for any
+permitted purpose. However, you may only make changes or
+new works based on the software according to Changes and New
+Works License, and you may not distribute the software.
+
+## Changes and New Works License
+
+The licensor grants you an additional copyright license to
+make changes and new works based on the software for any
+permitted purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that
+covers patent claims the licensor can license, or becomes able
+to license, that you would infringe by using the software.
+
+## Fair Use
+
+You may have "fair use" rights for the software under the
+law. These terms do not limit them.
+
+## Internal Business Use
+
+Use of the software for the internal business operations of
+you and your company is use for a permitted purpose.
+
+## No Other Rights
+
+These terms do not allow you to sublicense or transfer any of
+your licenses to anyone else, or prevent the licensor from
+granting licenses to anyone else. These terms do not imply
+any other licenses.
+
+## Patent Defense
+
+If you make any written claim that the software infringes or
+contributes to infringement of any patent, your patent license
+for the software granted under these terms ends immediately. If
+your company makes such a claim, your patent license ends
+immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have
+violated any of these terms, or done anything with the software
+not covered by your licenses, your licenses can nonetheless
+continue if you come into full compliance with these terms,
+and take practical steps to correct past violations, within
+32 days of receiving notice. Otherwise, all your licenses
+end immediately.
+
+## No Liability
+
+As far as the law allows, the software comes as is, without
+any warranty or condition, and the licensor will not be liable
+to you for any damages arising out of these terms or the use
+or nature of the software, under any kind of legal claim.
+
+## Definitions
+
+The **licensor** is the individual or entity offering these
+terms, and the **software** is the software the licensor makes
+available under these terms.
+
+**You** refers to the individual or entity agreeing to these
+terms.
+
+**Your company** is any legal entity, sole proprietorship,
+or other kind of organization that you work for, plus all
+organizations that have control over, are under the control of,
+or are under common control with that organization. **Control**
+means ownership of substantially all the assets of an entity,
+or the power to direct its management and policies by vote,
+contract, or otherwise. Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the
+software under these terms.
+
+**Use** means anything you do with the software requiring one
+of your licenses.

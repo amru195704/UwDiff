@@ -1,0 +1,29 @@
+# UwView.Formats
+
+[UwView](https://github.com/amru195704/UwView) の `UwView.Core`（無料版の公開部品）から、圧縮ファイルの展開と Word・Excel・PDF の文字の取り出しに要るファイルだけを写したもの。
+
+- **ファイルは変えない**（直すときは UwView で直してから写し直す）。名前空間も `UwView.Core` のまま。
+- 写し直し: `tools/sync_uwview.sh <UwView の作業ツリー>`
+- ライセンス: UwView と同じ（UwDiff と同じ）。使っているパッケージ: SharpCompress（MIT）・ZstdSharp.Port（MIT）・K4os.Compression.LZ4.Streams（MIT）・PdfPig（Apache-2.0）
+
+## 元
+
+- リポジトリ: https://github.com/amru195704/UwView
+- commit: `dd937e0af8c548102e5f8d173b5b53eb2f638f92`
+- 写したファイル（`UwView.Core/` からの場所）:
+
+  - `CompressedFormats.cs`
+  - `CompressedInput.cs`
+  - `Crc32.cs`
+  - `Documents/CjkRadicals.cs`
+  - `Documents/DocxText.cs`
+  - `Documents/ExcelNumberFormat.cs`
+  - `Documents/OfficeText.cs`
+  - `Documents/PdfText.cs`
+  - `Documents/XlsxText.cs`
+  - `GzipDecoder.cs`
+  - `LinkedFile.cs`
+  - `NativeCompression.cs`
+  - `OfficeDocumentFile.cs`
+  - `TextProbe.cs`
+  - `ThreadBudget.cs`

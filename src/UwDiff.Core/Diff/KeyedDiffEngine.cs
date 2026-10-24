@@ -119,12 +119,16 @@ public sealed class KeyedDiffEngine
     {
         var res = new KeyedDiffResult();
         var total = Stopwatch.StartNew();
-        CheckDuplicates = _o.CheckDuplicates;
-        Quotes = _o.Quotes;
-        if (_o.KeyColumns.Count == 0) throw new ArgumentException("キー列を 1 つ以上指定してください");
+        bool whole = _o.WholeLine;
+        CheckDuplicates = _o.CheckDuplicates && !whole;
+        Quotes = _o.Quotes && !whole;
+        IReadOnlyList<string> keyColumns = whole ? new[] { "#1" } : _o.KeyColumns;
+        if (keyColumns.Count == 0) throw new ArgumentException("キー列を 1 つ以上指定してください");
+        // 行全体: 区切りを改行にすれば、行の中に区切りは現れず、行全体が 1 列になる
+        byte? delim = whole ? (byte)'\n' : _o.Delimiter;
 
-        var fo = new FileInfoX { File = CsvFile.Probe(_o.OldPath, _o.OldEncoding, _o.Delimiter, _o.Quotes), Side = 0 };
-        var fn = new FileInfoX { File = CsvFile.Probe(_o.NewPath, _o.NewEncoding, _o.Delimiter, _o.Quotes), Side = 1 };
+        var fo = new FileInfoX { File = CsvFile.Probe(_o.OldPath, _o.OldEncoding, delim, Quotes, whole, _o.OldOpen, _o.OldLength), Side = 0 };
+        var fn = new FileInfoX { File = CsvFile.Probe(_o.NewPath, _o.NewEncoding, delim, Quotes, whole, _o.NewOpen, _o.NewLength), Side = 1 };
         DelimOld = fo.File.Delimiter;
         DelimNew = fn.File.Delimiter;
 
@@ -146,13 +150,13 @@ public sealed class KeyedDiffEngine
 
         // キーと列の対応（名前で）
         string[] ho = fo.File.Header, hn = fn.File.Header;
-        fo.KeyIndex = _o.KeyColumns.Select(fo.File.FindColumn).ToArray();
+        fo.KeyIndex = keyColumns.Select(fo.File.FindColumn).ToArray();
         // 新のキー列は、旧で見つけた列の名前で探す（"#2" で指定しても、新で列の位置が違えば名前で合わせる）
         fn.KeyIndex = new int[fo.KeyIndex.Length];
         for (int k = 0; k < fo.KeyIndex.Length; k++)
         {
             int j = Array.IndexOf(hn, ho[fo.KeyIndex[k]]);
-            fn.KeyIndex[k] = j >= 0 ? j : fn.File.FindColumn(_o.KeyColumns[k]);
+            fn.KeyIndex[k] = j >= 0 ? j : fn.File.FindColumn(keyColumns[k]);
         }
         KeyIndexOld = fo.KeyIndex;
         KeyIndexNew = fn.KeyIndex;
@@ -190,7 +194,7 @@ public sealed class KeyedDiffEngine
         _shards = new Shard[shards];
         _workers = new Worker[workers];
         for (int w = 0; w < workers; w++)
-            _workers[w] = new Worker(new DiffSink(_o.OutPath != null, WorkEncoding, WorkIsUtf8, () => NewTempPath("out")));
+            _workers[w] = new Worker(new DiffSink(_o.OutPath != null, WorkEncoding, WorkIsUtf8, () => NewTempPath("out"), _o.ExtraColumn?.Value));
         for (int s = 0; s < shards; s++)
         {
             _shards[s] = new Shard(this);
@@ -201,8 +205,8 @@ public sealed class KeyedDiffEngine
         long bytesO = fo.File.Length, bytesN = fn.File.Length;
         // 2 本を同時に読むときは歩調を合わせる（先に進みすぎた側は塊 2 つ分の差まで待つ）
         Pacer? pacer = _o.ReadConcurrently ? new Pacer(bytesO, bytesN, 2L * payload) : null;
-        fo.Reader = new FileReader(fo.File.Path, new BlockPool(_o.BlocksPerFile, Reserve + payload), Reserve, payload, fo.TranscodeFrom, fo.File.BomLength, pacer, 0);
-        fn.Reader = new FileReader(fn.File.Path, new BlockPool(_o.BlocksPerFile, Reserve + payload), Reserve, payload, fn.TranscodeFrom, fn.File.BomLength, pacer, 1);
+        fo.Reader = new FileReader(fo.File.Open, new BlockPool(_o.BlocksPerFile, Reserve + payload), Reserve, payload, fo.TranscodeFrom, fo.File.BomLength, pacer, 0);
+        fn.Reader = new FileReader(fn.File.Open, new BlockPool(_o.BlocksPerFile, Reserve + payload), Reserve, payload, fn.TranscodeFrom, fn.File.BomLength, pacer, 1);
 
         var match = Stopwatch.StartNew();
         long peakBytes = 0, peakRows = 0, peakManaged = 0;
@@ -306,16 +310,21 @@ public sealed class KeyedDiffEngine
 
         if (_o.OutPath != null)
         {
-            using var outFs = new FileStream(_o.OutPath, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
+            using var outFs = new FileStream(_o.OutPath, _o.AppendOutput ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
             var head = new ArrayBufferWriter<byte>();
             head.Write("区分"u8);
+            if (_o.ExtraColumn is { } extra)
+            {
+                head.Write(","u8);
+                CsvBytes.WriteField(head, Encoding.UTF8.GetBytes(extra.Name), (byte)',');
+            }
             foreach (int k in fo.KeyIndex)
             {
                 head.Write(","u8);
                 CsvBytes.WriteField(head, Encoding.UTF8.GetBytes(ho[k]), (byte)',');
             }
             head.Write(",列,旧値,新値\n"u8);
-            outFs.Write(head.WrittenSpan);
+            if (!_o.AppendOutput) outFs.Write(head.WrittenSpan);
             foreach (Worker w in _workers) w.Sink.CopyTo(outFs);
         }
         finish.Stop();
@@ -372,7 +381,7 @@ public sealed class KeyedDiffEngine
     private void Parse(FileInfoX f, BlockingCollection<Block> blocks)
     {
         byte delim = f.File.Delimiter;
-        bool quotes = _o.Quotes;
+        bool quotes = Quotes;
         int[] keyIdx = f.KeyIndex;
         bool single = keyIdx.Length == 1;
         int key0 = keyIdx[0];
@@ -383,7 +392,7 @@ public sealed class KeyedDiffEngine
         var counts = new int[nShards];
         byte[] carry = new byte[Reserve];
         int carryLen = 0;
-        bool header = true;
+        bool header = !_o.WholeLine;
         bool first = true;
         long rows = 0;
         byte[] keyTmp = new byte[1024];

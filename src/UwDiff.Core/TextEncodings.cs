@@ -105,7 +105,23 @@ public static class TextEncodings
             s = s[..^cut];
         }
         if (Utf8.IsValid(s)) return FileEncoding.Utf8;
-        return CountEucErrors(head, isWholeFile) < CountCp932Errors(head, isWholeFile) ? FileEncoding.EucJp : FileEncoding.Cp932;
+        int eucErr = CountEucErrors(head, isWholeFile), cpErr = CountCp932Errors(head, isWholeFile);
+        if (eucErr != cpErr) return eucErr < cpErr ? FileEncoding.EucJp : FileEncoding.Cp932;
+        // 崩れの数が同じ（EUC-JP の文字は CP932 として読んでも崩れないことが多い）: CP932 の日本語には、かな・よく使う漢字の
+        // 先頭バイト 0x81〜0x9F（0x8E・0x8F を除く。EUC-JP の半角カナと補助漢字の印と重なるため）がほぼ必ず出る。無ければ EUC-JP
+        return HasCp932LowLead(head) ? FileEncoding.Cp932 : FileEncoding.EucJp;
+    }
+
+    private static bool HasCp932LowLead(ReadOnlySpan<byte> s)
+    {
+        for (int i = 0; i < s.Length; i++)
+        {
+            byte b = s[i];
+            if (b < 0x80 || (b >= 0xA1 && b <= 0xDF)) continue;
+            if (b >= 0x81 && b <= 0x9F && b != 0x8E && b != 0x8F) return true;
+            i++;   // 2 バイト文字の 2 バイト目を飛ばす
+        }
+        return false;
     }
 
     /// <summary>BOM の無い UTF-16: 偶数番目か奇数番目の片方だけに 0 が多ければ UTF-16。</summary>

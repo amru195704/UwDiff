@@ -26,10 +26,22 @@ public sealed class RowReader
     /// </summary>
     public static Stream OpenWork(CsvFile f)
     {
-        var fs = new FileStream(f.Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.SequentialScan);
-        fs.Seek(f.BomLength, SeekOrigin.Begin);
+        Stream fs = f.Open();
+        Skip(fs, f.BomLength);
         if (TextEncodings.IsAsciiCompatible(f.Encoding)) return fs;
         return Encoding.CreateTranscodingStream(fs, TextEncodings.Get(f.Encoding), new UTF8Encoding(false), leaveOpen: false);
+    }
+
+    /// <summary>先頭の n バイトを読み捨てる（展開したストリームは Seek できないので）。</summary>
+    public static void Skip(Stream s, int n)
+    {
+        Span<byte> tmp = stackalloc byte[16];
+        while (n > 0)
+        {
+            int k = s.Read(tmp[..Math.Min(n, tmp.Length)]);
+            if (k == 0) return;
+            n -= k;
+        }
     }
 
     public bool Next(out ReadOnlySpan<byte> row, out ReadOnlySpan<byte> newline)

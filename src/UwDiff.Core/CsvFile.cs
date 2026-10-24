@@ -12,6 +12,8 @@ public sealed class CsvFile
     public const int HeadSize = 4 << 20;
 
     public required string Path { get; init; }
+    /// <summary>中身を先頭から読むストリームを開く（圧縮ファイルなら展開したもの）。</summary>
+    public Func<Stream> Open { get; private init; } = null!;
     public FileEncoding Encoding { get; private set; }
     public int BomLength { get; private set; }
     public byte Delimiter { get; private set; }
@@ -27,21 +29,26 @@ public sealed class CsvFile
     /// ファイルの先頭を読んで形を決める。
     /// delimiter が null なら、拡張子（.tsv・.tab はタブ、.csv はカンマ）、それ以外は見出しの行のタブとカンマの数で決める。
     /// </summary>
-    public static CsvFile Probe(string path, FileEncoding? encoding, byte? delimiter, bool quotes)
+    /// <param name="noHeader">見出しの行が無い（順番を問わないテキストの比較で、行全体を 1 列として扱うとき）。見出しは「行」の 1 列にする。</param>
+    /// <param name="open">中身を開く（null ならファイルそのもの）。圧縮ファイルの中身を読むときに渡す。</param>
+    /// <param name="length">中身の大きさの見積もり（open を渡したとき。進み具合と 2 本の歩調合わせに使う）。</param>
+    public static CsvFile Probe(string path, FileEncoding? encoding, byte? delimiter, bool quotes, bool noHeader = false,
+        Func<Stream>? open = null, long length = 0)
     {
-        var f = new CsvFile { Path = path };
-        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        f.Length = fs.Length;
-        int len = (int)Math.Min(fs.Length, HeadSize);
-        byte[] head = new byte[len];
+        open ??= () => new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.SequentialScan);
+        var f = new CsvFile { Path = path, Open = open };
+        using var fs = open();
+        byte[] head = new byte[HeadSize];
         int n = 0;
-        while (n < len)
+        while (n < head.Length)
         {
-            int k = fs.Read(head, n, len - n);
+            int k = fs.Read(head, n, head.Length - n);
             if (k == 0) break;
             n += k;
         }
-        FileEncoding detected = TextEncodings.Detect(head.AsSpan(0, n), n == fs.Length, out int bom);
+        bool whole = n < head.Length;
+        f.Length = length > 0 ? length : (fs.CanSeek ? fs.Length : n);
+        FileEncoding detected = TextEncodings.Detect(head.AsSpan(0, n), whole, out int bom);
         f.Encoding = encoding ?? detected;
         // 文字コードを指定されたときも、その文字コードの BOM があれば飛ばす
         if (encoding != null && encoding != detected)
@@ -61,6 +68,11 @@ public sealed class CsvFile
         }
         f.Delimiter = delimiter ?? GuessDelimiter(path, row, quotes);
 
+        if (noHeader)
+        {
+            f.Header = new[] { "行" };
+            return f;
+        }
         var fields = new List<CsvBytes.Field>();
         CsvBytes.Split(row, f.Delimiter, fields, quotes);
         Encoding enc = TextEncodings.IsAsciiCompatible(f.Encoding) ? TextEncodings.Get(f.Encoding) : new UTF8Encoding(false);

@@ -6,6 +6,19 @@ public sealed class KeyedDiffOptions
     public required string OldPath { get; init; }
     public required string NewPath { get; init; }
 
+    /// <summary>中身を開く（null ならファイルそのもの）。圧縮ファイル・Excel のシートなど、取り出したものを比べるときに渡す。</summary>
+    public Func<Stream>? OldOpen { get; init; }
+    public Func<Stream>? NewOpen { get; init; }
+    /// <summary>中身の大きさの見積もり（OldOpen・NewOpen を渡したとき）。</summary>
+    public long OldLength { get; init; }
+    public long NewLength { get; init; }
+
+    /// <summary>差分の出力の、区分の次に足す列（Excel のシート名など）。null なら足さない。</summary>
+    public (string Name, string Value)? ExtraColumn { get; init; }
+
+    /// <summary>差分を OutPath の後ろに足す（見出しの行は書かない）。Excel のシートを 1 本の差分にまとめるとき。</summary>
+    public bool AppendOutput { get; init; }
+
     /// <summary>差分の書き出し先（区分,キー列…,列,旧値,新値・UTF-8）。null なら書き出さない（件数だけ）。</summary>
     public string? OutPath { get; init; }
 
@@ -21,6 +34,12 @@ public sealed class KeyedDiffOptions
 
     /// <summary>引用符（"）を CSV の決まりどおりに扱う（false なら引用符も普通の文字。引用符を使わない TSV 用）。</summary>
     public bool Quotes { get; init; } = true;
+
+    /// <summary>
+    /// 行全体を 1 つの値として比べる（順番を問わないテキストの比較）。見出しの行は無く、引用符も区切りも見ない。
+    /// 同じ行が何回あるかまで比べる（旧に 3 回・新に 2 回なら 1 回の削除）。空の行は比べない。
+    /// </summary>
+    public bool WholeLine { get; init; }
 
     /// <summary>1 回に読む大きさ（MB）。</summary>
     public int BlockSizeMB { get; init; } = 32;

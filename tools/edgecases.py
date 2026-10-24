@@ -176,7 +176,7 @@ def run_case(name, oh, orows, nh, nrows, oenc, nenc, keys=('点名',), args=(), 
     js = os.path.join(WORK, f'{name}.json')
     keyargs = ['-key', ','.join(keys)]
     p = subprocess.run([UVD, op, np_, *keyargs, '-o', out, '-json', js, '-q', *args] + EXTRA, capture_output=True, text=True)
-    if p.returncode != 0:
+    if p.returncode not in (0, 1):   # 0 = 同じ・1 = 違いあり（diff と同じ）
         print(f'× {name}: 終了コード {p.returncode} {p.stderr.strip()}')
         return False
     exp, od, nd, skip = expected(oh, orows, nh, nrows, list(keys))

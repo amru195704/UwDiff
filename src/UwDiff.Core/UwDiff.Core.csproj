@@ -7,4 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>UwDiff.Core</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UwView.Formats\UwView.Formats.csproj" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UwDiff の画面（Avalonia。UwView と同じ版）。比べる処理は CLI（Uvd.Cli）を同じプロセスの中で呼び、結果の置き場所を読んで見せる。 -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>UwDiff</AssemblyName>
+    <RootNamespace>UwDiff.App</RootNamespace>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="UwDiff.UiTests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UwDiff.Core\UwDiff.Core.csproj" />
+    <ProjectReference Include="..\Uvd.Cli\Uvd.Cli.csproj" />
+  </ItemGroup>
+</Project>

@@ -88,17 +88,50 @@ public sealed class SettingsWindow : Window
     }
 }
 
-/// <summary>UwDiff について（版・ビルド番号・ライセンス・リンク）。</summary>
+/// <summary>UwDiff について（UwView と同じ形: 名前・版とビルド番号・説明・©・リンク）。</summary>
 public static class AboutWindow
 {
-    public static async Task ShowAsync(Window owner)
+    public static Task ShowAsync(Window owner) => Make().ShowDialog(owner);
+
+    internal static Window Make() => new()
     {
-        string text = $"UwDiff {Uvd.Cli.Program.Version} (build {Uvd.Cli.Program.BuildNumber})\n\n{Loc.T("AboutText")}\n\n"
-                      + "Copyright (c) 2026 amru195704 (Y4U)\n"
-                      + $"{Loc.T("License")}: UwDiff License (PolyForm Internal Use 1.0.0 + packaging permission)\n{Links.Repo}";
-        int r = await MessageBox.ShowAsync(owner, text, Loc.T("Ok"), "GitHub", Loc.T("License"));
-        if (r == 1) Links.Open(Links.RepoHome);
-        if (r == 2) Links.Open(Links.LicenseFile);
+        Title = Loc.T("AppAbout"),
+        Width = 420,
+        SizeToContent = SizeToContent.Height,
+        CanResize = false,
+        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+        Content = new StackPanel
+        {
+            Margin = new Thickness(28, 24),
+            Spacing = 6,
+            Children =
+            {
+                new TextBlock { Text = "UwDiff", FontSize = 26, FontWeight = FontWeight.Bold },
+                new TextBlock { Text = $"Version {Uvd.Cli.Program.Version}  (build {Uvd.Cli.Program.BuildNumber})" },
+                new TextBlock { Text = Loc.T("AboutText"), TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = "© 2026 amru195704 (Y4U)", Margin = new Thickness(0, 10, 0, 0) },
+                Link(Loc.T("AboutNews"), Links.News),
+                Link(Loc.T("AboutHowTo"), Links.HowTo),
+                Link(Loc.T("HelpSupport"), Links.Support),
+                Link("GitHub", Links.RepoHome),
+                Link(Loc.T("License"), Links.LicenseFile),
+            },
+        },
+    };
+
+    /// <summary>押すと既定のブラウザで開く、リンクの形の文字。</summary>
+    private static TextBlock Link(string label, string url)
+    {
+        var t = new TextBlock
+        {
+            Text = label,
+            Foreground = new SolidColorBrush(Color.Parse("#2F6FDB")),
+            TextDecorations = TextDecorations.Underline,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+        ToolTip.SetTip(t, url);
+        t.PointerPressed += (_, _) => Links.Open(url);
+        return t;
     }
 }
 

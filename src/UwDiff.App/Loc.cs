@@ -129,6 +129,9 @@ public static class Loc
         // について
         ["AboutText"] = ("どんな形式・文字コード・OS でも、多数・巨大ファイルを高速に比べる無料の道具。", "A free tool that compares many and huge files fast — any format, any encoding, any OS."),
         ["License"] = ("ライセンス", "License"),
+        ["AboutNews"] = ("最新情報（リリース）", "What's new (releases)"),
+        ["AboutHowTo"] = ("使い方（操作マニュアル）", "How to use (user manual)"),
+        ["TipLangBox"] = ("画面の言語（日本語・English）。設定… でも切り替えられる", "Display language (Japanese / English). Also in Settings…"),
         // コマンドライン
         ["CmdTitle"] = ("コマンドライン（uvd）", "Command Line (uvd)"),
         ["CmdHelp"] = ("uvd に渡す引数を入れて「実行」。比べた結果は新しいタブで開く（uvd -open と同じ）。例: 旧.csv 新.csv -key 点名／apply 旧.csv 新.csv 差分.csv -o 結果.csv", "Enter the arguments for uvd and click Run. Comparison results open in a new tab (same as uvd -open). e.g. old.csv new.csv -key ID / apply old.csv new.csv diff.csv -o out.csv"),

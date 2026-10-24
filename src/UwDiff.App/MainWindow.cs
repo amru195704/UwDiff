@@ -28,6 +28,7 @@ public sealed class MainWindow : Window
     internal readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8, 4) };
     private readonly ProgressBar _progress = new() { Minimum = 0, Maximum = 1, Height = 4, IsVisible = false };
     private readonly NativeMenuBar _menuBar = new();
+    internal readonly ComboBox _lang = new() { ItemsSource = new[] { "日本語", "English" }, Width = 120 };
     private readonly List<(TextBlock Label, Button File, Button Folder, bool IsOld)> _pathRows = new();
     internal string TempDir { get; } = Path.Combine(Path.GetTempPath(), $"uwdiff-{Environment.ProcessId}");
 
@@ -44,7 +45,9 @@ public sealed class MainWindow : Window
         AddPathRow(paths, 0, _old, true);
         AddPathRow(paths, 1, _new, false);
         var opts = new WrapPanel { Margin = new Thickness(8, 4), Orientation = Orientation.Horizontal };
-        foreach (Control c in new Control[] { _key, _b, _w, _i, _unordered, _compare })
+        _lang.SelectedIndex = Loc.Ja ? 0 : 1;
+        _lang.SelectionChanged += (_, _) => { if (_lang.SelectedIndex >= 0) Loc.Set(_lang.SelectedIndex == 0); };
+        foreach (Control c in new Control[] { _key, _b, _w, _i, _unordered, _compare, _lang })
         {
             c.Margin = new Thickness(6, 2);
             c.VerticalAlignment = VerticalAlignment.Center;
@@ -149,29 +152,41 @@ public sealed class MainWindow : Window
         ToolTip.SetTip(_i, Loc.T("TipIgnoreCase"));
         ToolTip.SetTip(_unordered, Loc.T("TipUnordered"));
         ToolTip.SetTip(_compare, Loc.T("TipCompare"));
+        ToolTip.SetTip(_lang, Loc.T("TipLangBox"));
+        if (_lang.SelectedIndex != (Loc.Ja ? 0 : 1)) _lang.SelectedIndex = Loc.Ja ? 0 : 1;
         foreach (TabItem t in _tabs.Items.OfType<TabItem>())
             if (t.Header is StackPanel { Children: [_, Button close] }) ToolTip.SetTip(close, Loc.T("TipCloseTab"));
         BuildMenus();
     }
 
-    // ---- メニュー ----
-    private static NativeMenuItem Item(string key, Action click, Key? key2 = null, KeyModifiers mods = KeyModifiers.None)
+    // ---- メニュー（一度だけ作り、言語が替わったら文言だけ入れ替える） ----
+    private readonly List<(NativeMenuItem Item, string Key)> _menuTexts = new();
+
+    private NativeMenuItem Item(string key, Action click, Key? key2 = null, KeyModifiers mods = KeyModifiers.None)
     {
         var it = new NativeMenuItem(Loc.T(key));
         it.Click += (_, _) => click();
         if (key2 is Key k) it.Gesture = new KeyGesture(k, mods);
+        _menuTexts.Add((it, key));
         return it;
     }
 
-    private static NativeMenuItem Sub(string key, params NativeMenuItemBase[] items)
+    private NativeMenuItem Sub(string key, params NativeMenuItemBase[] items)
     {
         var m = new NativeMenu();
         foreach (var i in items) m.Items.Add(i);
-        return new NativeMenuItem(Loc.T(key)) { Menu = m };
+        var it = new NativeMenuItem(Loc.T(key)) { Menu = m };
+        _menuTexts.Add((it, key));
+        return it;
     }
 
     private void BuildMenus()
     {
+        if (_menuTexts.Count > 0)
+        {
+            foreach (var (item, key) in _menuTexts) item.Header = Loc.T(key);
+            return;
+        }
         bool mac = OperatingSystem.IsMacOS();
         var file = new List<NativeMenuItemBase>
         {
@@ -210,16 +225,7 @@ public sealed class MainWindow : Window
         menu.Items.Add(Sub("FileMenu", file.ToArray()));
         menu.Items.Add(Sub("HelpMenu", help.ToArray()));
         NativeMenu.SetMenu(this, menu);
-
-        // mac: アプリのメニュー（UwDiff について・設定…）。Services・Hide・Quit は OS が足す
-        if (mac && Application.Current is { } app)
-        {
-            var appMenu = new NativeMenu();
-            appMenu.Items.Add(Item("AppAbout", () => _ = AboutWindow.ShowAsync(this)));
-            appMenu.Items.Add(new NativeMenuItemSeparator());
-            appMenu.Items.Add(Item("AppSettings", OpenSettings, Key.OemComma, Cmd));
-            NativeMenu.SetMenu(app, appMenu);
-        }
+        // mac のアプリのメニュー（UwDiff について・設定…）は App.Initialize で入れる
     }
 
     internal void OpenSettings() => _ = new SettingsWindow().ShowDialog(this);

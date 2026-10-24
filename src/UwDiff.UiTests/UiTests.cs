@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using UwDiff.App;
 using UwDiff.App.Views;
 
@@ -218,6 +219,36 @@ public class UiTests
         Loc.Set(true);
         await WaitUntil(() => (string?)w._compare.Content == "比べる", "日本語に戻らない");
         Assert.Equal("ファイル", NativeMenu.GetMenu(w)!.Items.OfType<NativeMenuItem>().First().Header);
+        w.Close();
+    }
+
+    [AvaloniaFact]
+    public void アプリのメニューとについてと言語の切り替え()
+    {
+        Loc.Set(true);
+        // アプリのメニュー（mac の UwDiff メニュー）は起動のときに入っている
+        var app = NativeMenu.GetMenu(Avalonia.Application.Current!)!;
+        Assert.Equal(new[] { "UwDiff について", "設定…" }, app.Items.OfType<NativeMenuItem>().Where(i => i is not NativeMenuItemSeparator).Select(i => i.Header).ToArray());
+        var w = Open();
+        // 上の欄の切り替え
+        Assert.Equal(0, w._lang.SelectedIndex);
+        w._lang.SelectedIndex = 1;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(Loc.Ja);
+        Assert.Equal(new[] { "About UwDiff", "Settings…" }, app.Items.OfType<NativeMenuItem>().Where(i => i is not NativeMenuItemSeparator).Select(i => i.Header).ToArray());
+        Assert.Equal("Compare", w._compare.Content);
+        // について: 版とビルド番号
+        var about = AboutWindow.Make();
+        about.Show();
+        var texts = about.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Assert.Contains($"Version {Uvd.Cli.Program.Version}  (build {Uvd.Cli.Program.BuildNumber})", texts);
+        Assert.Contains("What's new (releases)", texts);
+        Shot(about, "about_en");
+        about.Close();
+        w._lang.SelectedIndex = 0;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(Loc.Ja);
+        Assert.Equal("UwDiff について", app.Items.OfType<NativeMenuItem>().First().Header);
         w.Close();
     }
 

@@ -8,6 +8,7 @@
 import os, shutil, subprocess, sys
 
 UVD, WORK = sys.argv[1], sys.argv[2]
+if os.path.exists(UVD): UVD = os.path.abspath(UVD)   # 作業フォルダで動かす試験があるので
 CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata', 'check_unified.py')
 shutil.rmtree(WORK, ignore_errors=True)
 os.makedirs(WORK)
@@ -80,6 +81,39 @@ report('失敗しても書き出し先は元のまま・一時ファイルも残
 r = run(p('old.txt'), p('new.txt'), '-o', p('keep.diff'))
 left = [f for f in os.listdir(WORK) if '.uvd-' in f]
 report('成功すれば書き出し先が入れ替わる', r.returncode == 1 and read('keep.diff').startswith(b'--- ') and not left, f'残った一時ファイル {left}')
+
+# 2 回目のレビュー（2026-10-25）で見つかったもの
+# -json もハードリンク先の入力を壊さない（一時ファイルから入れ替える）
+reset()
+os.link(p('old.txt'), p('hard2_old.txt'))
+r = run(p('old.txt'), p('new.txt'), '-json', p('hard2_old.txt'))
+report('-json が旧のハードリンク（旧は元のまま）', r.returncode in (1, 2) and read('old.txt') == OLD_T, f'終了コード {r.returncode}')
+# フォルダの中の比較対象を -o・-json にできない。-detail が比べるフォルダの中も断る
+for d in ('fo', 'fn'): os.makedirs(p(d), exist_ok=True)
+write('fo/source.txt', b'src\n'); write('fn/source.txt', b'src2\n')
+refused('フォルダの -o が比べるファイル（旧のフォルダの中）', [p('fo'), p('fn'), '-o', p('fo/source.txt')], {'fo/source.txt': b'src\n'})
+refused('フォルダの -json が比べるファイル（新のフォルダの中）', [p('fo'), p('fn'), '-json', p('fn/source.txt')], {'fn/source.txt': b'src2\n'})
+r = run(p('fo'), p('fn'), '-detail', p('fo/details'))
+report('フォルダの -detail が比べるフォルダの中なら断る', r.returncode == 2 and not os.path.exists(p('fo/details')), f'終了コード {r.returncode}')
+r = run(p('fo'), p('fn'), '-o', p('fo/list.csv'))
+report('フォルダの中でも比べるファイルでない名前の一覧は書ける', r.returncode == 1 and read('fo/source.txt') == b'src\n', f'終了コード {r.returncode}')
+# 「-」を標準出力とみなすのはテキストの比較だけ（表では「-」という名前の入力を守る）
+write('-', OLD_C)
+r = subprocess.run([UVD, '-', p('new.csv'), '-key', 'id', '-o', '-', '-q'], capture_output=True, text=True, cwd=WORK)
+report('表で入力も -o も「-」（入力は元のまま）', r.returncode == 2 and read('-') == OLD_C, f'終了コード {r.returncode}')
+r = run(p('old.txt'), p('new.txt'), '-o', '-')
+report('テキストの -o - は標準出力', r.returncode == 1 and '--- ' in r.stdout, f'終了コード {r.returncode}')
+# 書き出し先が既存のフォルダ: 断り、一時ファイルも残らない
+os.makedirs(p('outdir'), exist_ok=True)
+r = run(p('old.txt'), p('new.txt'), '-o', p('outdir'))
+left = [f for f in os.listdir(WORK) if '.uvd-' in f]
+report('-o が既存のフォルダなら断る・一時ファイルも残らない', r.returncode == 2 and not left, f'終了コード {r.returncode}・残った一時ファイル {left}')
+# 文脈を広げても、最後の同じ行に「改行なし」を付ける（-U 20）
+o20 = ['x'] + [f'l{i}' for i in range(19)]
+write('w1.txt', '\n'.join(o20)); write('w2.txt', '\n'.join(['y'] + o20[1:]))
+run(p('w1.txt'), p('w2.txt'), '-U', '20', '-o', p('w.diff'))
+c = subprocess.run([sys.executable, '-I', CHECK, p('w1.txt'), p('w2.txt'), p('w.diff')], capture_output=True, text=True)
+report('-U 20 で最後の同じ行に改行なし（文脈が最後の行まで届く）', c.returncode == 0, c.stdout.strip())
 
 # CP932 のまま -i: 2 バイト文字の 2 バイト目を変えない
 write('j1.txt', 'abc、ABC\n'.encode('cp932')); write('j2.txt', 'abc∥abc\n'.encode('cp932')); write('j3.txt', 'ABC、abc\n'.encode('cp932'))

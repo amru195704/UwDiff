@@ -16,6 +16,8 @@ internal static class FolderCommand
 {
     public static int Run(CliArgs a)
     {
+        // 明細のフォルダが比べるフォルダの中だと、明細が比べるファイルを上書きしうる
+        OutputGuard.CheckOutsideFolders(a.DetailDir, "明細（-detail）", a.Positional[0], a.Positional[1]);
         var sw = Stopwatch.StartNew();
         long lastShown = 0;
         FolderDiffResult r = FolderDiff.Run(new FolderDiffOptions
@@ -35,6 +37,14 @@ internal static class FolderCommand
             },
         });
         if (!a.Quiet) Console.Error.WriteLine();
+        // 書き出し先（一覧・要約）が、比べたファイルのどれかなら書く前に止める（フォルダの中のファイルを上書きしないように）
+        IEnumerable<string> compared = r.Entries.SelectMany(e => new[]
+        {
+            e.Kind == FolderEntryKind.OnlyNew ? null : Path.Combine(a.Positional[0], e.RelPath),
+            e.Kind == FolderEntryKind.OnlyOld ? null : Path.Combine(a.Positional[1], e.RelPath),
+        }).OfType<string>();
+        OutputGuard.CheckAgainst(a.OutPath, "一覧（-o）", compared);
+        OutputGuard.CheckAgainst(a.JsonPath, "要約（-json）", compared);
         if (a.ResultDir != null)
         {
             a.OutPath ??= Path.Combine(a.ResultDir, "folder.csv");
@@ -89,7 +99,7 @@ internal static class FolderCommand
         }
 
         if (a.JsonPath != null)
-            File.WriteAllText(a.JsonPath, "{" +
+            OutputGuard.WriteAllText(a.JsonPath, "{" +
                 $"\"old\":{J(a.Positional[0])},\"new\":{J(a.Positional[1])},\"mode\":\"folder\",\"onlyOld\":{r.OnlyOld},\"onlyNew\":{r.OnlyNew}," +
                 $"\"different\":{r.Different},\"same\":{r.Same},\"bytesCompared\":{r.BytesCompared},\"detailed\":{detailed},\"detailFailed\":{detailFailed}," +
                 $"\"totalSec\":{F(r.Total.TotalSeconds)}" + "}\n");

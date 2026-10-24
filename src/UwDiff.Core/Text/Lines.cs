@@ -256,8 +256,12 @@ internal sealed class LineWindow
         return h;
     }
 
-    /// <summary>i 番目の行がファイルの最後の行で、改行が無いまま終わっているか。</summary>
-    public bool IsUnterminated(int i) => _lastUnterminated && _eof && i == _avail - 1;
+    /// <summary>
+    /// i 番目の行がファイルの最後の行で、改行が無いまま終わっているか。
+    /// 改行の無い最後の行は最後の塊にしかないので、その塊を取り込んだ時点で決まる（「もう塊が無い」と分かるのを待たない。
+    /// 待つと、文脈を広く取ったときに最後の行の印が欠けた）。
+    /// </summary>
+    public bool IsUnterminated(int i) => _lastUnterminated && i == _avail - 1;
 
     /// <summary>先頭の chunk 内で、続けて使える行（塊の境目まで）。速い一致の走査用。</summary>
     internal LineChunk? FirstChunk(out int index)

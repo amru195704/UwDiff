@@ -126,7 +126,7 @@ internal static class TableCommand
             }
             Console.WriteLine($"合計（{names.Count} シート）: 追加 {totals.Added:N0}／削除 {totals.Deleted:N0}／変更 {totals.ChangedRows:N0} 行（{totals.ChangedCells:N0} セル）／同じ {totals.SameRows:N0}");
             if (a.JsonPath != null)
-                File.WriteAllText(a.JsonPath, "{" + $"\"old\":{J(io.Path)},\"new\":{J(inew.Path)},\"sheets\":{names.Count},\"keys\":{L(totals.KeyColumnNames)}," +
+                OutputGuard.WriteAllText(a.JsonPath, "{" + $"\"old\":{J(io.Path)},\"new\":{J(inew.Path)},\"sheets\":{names.Count},\"keys\":{L(totals.KeyColumnNames)}," +
                     $"\"oldRows\":{totals.OldRows},\"newRows\":{totals.NewRows},\"added\":{totals.Added},\"deleted\":{totals.Deleted},\"changedRows\":{totals.ChangedRows},\"changedCells\":{totals.ChangedCells},\"same\":{totals.SameRows}" + "}\n");
             return differs || totals.Added + totals.Deleted + totals.ChangedCells > 0 ? 1 : 0;
         }
@@ -160,7 +160,7 @@ internal static class TableCommand
 
         if (a.JsonPath != null)
         {
-            File.WriteAllText(a.JsonPath,
+            OutputGuard.WriteAllText(a.JsonPath,
                 "{" +
                 $"\"old\":{J(a.Positional[0])},\"new\":{J(a.Positional[1])},\"mode\":{J(unordered ? "unordered" : "table")},\"key\":{J(keyName)},\"keys\":{L(r.KeyColumnNames)}," +
                 $"\"oldEncoding\":{J(r.OldEncoding)},\"newEncoding\":{J(r.NewEncoding)},\"transcoded\":{(r.Transcoded ? "true" : "false")}," +

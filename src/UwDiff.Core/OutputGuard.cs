@@ -10,16 +10,58 @@ namespace UwDiff.Core;
 /// </summary>
 public static class OutputGuard
 {
-    /// <summary>出力先 output が inputs のどれかと同じファイルなら ArgumentException。null・"-"（標準出力）は見ない。</summary>
-    public static void Check(string? output, string what, params string?[] inputs)
+    /// <summary>
+    /// 出力先 output が inputs のどれかと同じファイルなら ArgumentException。null だけは見ない。
+    /// 「-」を標準出力として扱うのは、実際に標準出力へ書く呼び出し側が決める（ここでは「-」という名前のファイルとして照らす）。
+    /// </summary>
+    public static void Check(string? output, string what, params string?[] inputs) => CheckAgainst(output, what, inputs);
+
+    /// <summary>
+    /// 出力先が、たくさんの入力（フォルダの比較で列挙したファイルなど）のどれかと同じファイルなら ArgumentException。
+    /// 名前（最後の部分）が同じものだけ、リンクをたどって比べる。
+    /// </summary>
+    public static void CheckAgainst(string? output, string what, IEnumerable<string?> inputs)
     {
-        if (string.IsNullOrEmpty(output) || output == "-") return;
+        if (string.IsNullOrEmpty(output)) return;
         string o = RealPath(output);
+        string name = Path.GetFileName(o);
+        var cmp = OperatingSystem.IsMacOS() || OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         foreach (string? i in inputs)
         {
             if (string.IsNullOrEmpty(i)) continue;
+            // 名前が違えば、リンクでない限り別のファイル。リンクのこともあるので、名前が違うものは実際の場所の名前で見直す
+            if (!string.Equals(Path.GetFileName(i), name, cmp) && !IsLink(i)) continue;
             if (Same(o, RealPath(i)))
                 throw new ArgumentException($"{what}の書き出し先が入力と同じファイルです（元のファイルを壊さないよう止めました）: {output}");
+        }
+    }
+
+    private static bool IsLink(string path)
+    {
+        try { return new FileInfo(path).LinkTarget != null; }
+        catch (IOException) { return false; }
+    }
+
+    /// <summary>文字列を書く（一時ファイルに書いてから入れ替える。-json など）。</summary>
+    public static void WriteAllText(string path, string text)
+    {
+        using SafeFile f = SafeFile.Create(path, 1 << 16);
+        byte[] b = new System.Text.UTF8Encoding(false).GetBytes(text);
+        f.Write(b);
+        f.Commit();
+    }
+
+    /// <summary>出力先のフォルダ dir が、比べるフォルダ roots のどれかと同じか、その中にあるなら ArgumentException（-detail 用）。</summary>
+    public static void CheckOutsideFolders(string? dir, string what, params string[] roots)
+    {
+        if (string.IsNullOrEmpty(dir)) return;
+        string d = RealPath(dir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var cmp = OperatingSystem.IsMacOS() || OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        foreach (string r in roots)
+        {
+            string rr = RealPath(r).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (d.StartsWith(rr, cmp))
+                throw new ArgumentException($"{what}のフォルダが、比べるフォルダの中にあります（比べるファイルを上書きしうるので止めました）: {dir}");
         }
     }
 
@@ -106,6 +148,7 @@ public static class OutputGuard
         public static SafeFile Create(string path, int bufferSize = 1 << 20)
         {
             string target = RealPath(path);
+            if (Directory.Exists(target)) throw new ArgumentException("書き出し先がフォルダです（ファイルの名前を指定してください）: " + path);
             string dir = Path.GetDirectoryName(target) ?? ".";
             Directory.CreateDirectory(dir);
             string temp = Path.Combine(dir, $".{Path.GetFileName(target)}.uvd-{Environment.ProcessId}-{Guid.NewGuid().ToString("N")[..8]}.tmp");
@@ -125,10 +168,17 @@ public static class OutputGuard
             base.Dispose(disposing);
             if (!disposing || _done) return;
             _done = true;   // 二度目の Dispose では何もしない
-            if (_committed) File.Move(_temp, _target, overwrite: true);
-            else if (File.Exists(_temp))
+            try
             {
-                try { File.Delete(_temp); } catch (IOException) { }
+                if (_committed) File.Move(_temp, _target, overwrite: true);
+            }
+            finally
+            {
+                // 入れ替えなかった・入れ替えに失敗したときは一時ファイルを消す（巨大な差分を残さない）
+                if (File.Exists(_temp))
+                {
+                    try { File.Delete(_temp); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                }
             }
         }
     }

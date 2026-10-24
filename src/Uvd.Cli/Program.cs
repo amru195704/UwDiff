@@ -86,8 +86,10 @@ public static class Program
             if (a.Open && a.Positional.Count == 0) return LaunchGui(null) ? 0 : 2;
             if (a.Positional.Count != 2) throw new ArgumentException("使い方: uvd 旧 新 [-key 列名] [-o 差分]（-h で詳しく）");
             // 書き出し先が入力と同じファイルなら、読む前に止める（リンクをたどって比べる。元のファイルを壊さない）
-            OutputGuard.Check(a.OutPath, "差分（-o）", a.Positional[0], a.Positional[1]);
-            OutputGuard.Check(a.JsonPath, "要約（-json）", a.Positional[0], a.Positional[1], a.OutPath);
+            // 「-」を標準出力として扱うのはテキストの比較だけ（表・フォルダでは「-」という名前のファイル）
+            bool toStdout = a.OutPath == "-" && !a.Unordered && a.Keys.Count == 0 && !Directory.Exists(a.Positional[0]);
+            if (!toStdout) OutputGuard.Check(a.OutPath, "差分（-o）", a.Positional[0], a.Positional[1]);
+            OutputGuard.Check(a.JsonPath, "要約（-json）", a.Positional[0], a.Positional[1], toStdout ? null : a.OutPath);
             if (a.Open && a.ResultDir == null) a.ResultDir = ResultPackage.NewFolder(a.TempDir);
             if (a.ResultDir != null) Directory.CreateDirectory(a.ResultDir);
             // 画面に渡す要約: 標準出力に出す行を写しておく

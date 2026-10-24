@@ -63,7 +63,7 @@ internal static class TextCommand
         info.WriteLine($"時間: {r.Total.TotalSeconds:F2} 秒／目印を探した範囲の最大 {r.PeakWindowLines:N0} 行");
 
         if (a.JsonPath != null)
-            File.WriteAllText(a.JsonPath, "{" +
+            OutputGuard.WriteAllText(a.JsonPath, "{" +
                 $"\"old\":{J(io.Path)},\"new\":{J(inew.Path)},\"mode\":\"text\",\"oldKind\":{J(io.KindName)},\"newKind\":{J(inew.KindName)}," +
                 $"\"oldEncoding\":{J(r.OldEncoding)},\"newEncoding\":{J(r.NewEncoding)},\"transcoded\":{(r.Transcoded ? "true" : "false")}," +
                 $"\"oldLines\":{r.OldLines},\"newLines\":{r.NewLines},\"equal\":{r.EqualLines},\"deleted\":{r.DeletedLines},\"inserted\":{r.InsertedLines}," +

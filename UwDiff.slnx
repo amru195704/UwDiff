@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UwDiff.Core/UwDiff.Core.csproj" />
+    <Project Path="src/Uvd.Cli/Uvd.Cli.csproj" />
+  </Folder>
+</Solution>

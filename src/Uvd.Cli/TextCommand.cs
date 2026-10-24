@@ -34,10 +34,12 @@ internal static class TextCommand
         }
         else
         {
-            using Stream output = toStdout ? Console.OpenStandardOutput() : new FileStream(a.OutPath, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
+            // 一時ファイルに書き、終わってから -o の名前にする（途中で失敗しても、-o の先は元のまま）
+            using Stream output = toStdout ? Console.OpenStandardOutput() : OutputGuard.SafeFile.Create(a.OutPath);
             using var w = new UnifiedDiffWriter(output, so, sn, a.Context, TempPath(a));
             r = engine.Run(so, sn, rec == null ? w : new TeeSink(w, rec));
             hunks = w.Hunks;
+            (output as OutputGuard.SafeFile)?.Commit();
         }
         if (rec != null)
         {
@@ -101,9 +103,12 @@ internal static class TextCommand
     internal static bool DiffQuiet(CliArgs a, InputFile io, InputFile inew, string outPath)
     {
         TextSource so = io.AsText(a.Format.OldEncoding, a.Raw), sn = inew.AsText(a.Format.NewEncoding, a.Raw);
-        using var output = new FileStream(outPath, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
+        OutputGuard.Check(outPath, "明細", io.Path, inew.Path);
+        using var output = OutputGuard.SafeFile.Create(outPath);
         using var w = new UnifiedDiffWriter(output, so, sn, a.Context, TempPath(a));
-        return !new TextDiffEngine(Options(a, null)).Run(so, sn, w).Same;
+        bool differs = !new TextDiffEngine(Options(a, null)).Run(so, sn, w).Same;
+        output.Commit();
+        return differs;
     }
 
     /// <summary>2 つの sink に同じ差分を渡す。</summary>

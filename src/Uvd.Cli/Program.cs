@@ -85,6 +85,9 @@ public static class Program
             // uvd -open だけ: 画面を開く（比べるものは画面で選ぶ）
             if (a.Open && a.Positional.Count == 0) return LaunchGui(null) ? 0 : 2;
             if (a.Positional.Count != 2) throw new ArgumentException("使い方: uvd 旧 新 [-key 列名] [-o 差分]（-h で詳しく）");
+            // 書き出し先が入力と同じファイルなら、読む前に止める（リンクをたどって比べる。元のファイルを壊さない）
+            OutputGuard.Check(a.OutPath, "差分（-o）", a.Positional[0], a.Positional[1]);
+            OutputGuard.Check(a.JsonPath, "要約（-json）", a.Positional[0], a.Positional[1], a.OutPath);
             if (a.Open && a.ResultDir == null) a.ResultDir = ResultPackage.NewFolder(a.TempDir);
             if (a.ResultDir != null) Directory.CreateDirectory(a.ResultDir);
             // 画面に渡す要約: 標準出力に出す行を写しておく
@@ -122,6 +125,8 @@ public static class Program
                                    or UwView.Core.Documents.OfficeRejectedException)
         {
             Console.Error.WriteLine("uvd: " + ex.Message);
+            // UVD_DEBUG=1 なら、どこで起きたかも出す（調べるとき用）
+            if (Environment.GetEnvironmentVariable("UVD_DEBUG") == "1") Console.Error.WriteLine(ex);
             return 2;
         }
     }
@@ -276,6 +281,8 @@ public sealed class CliArgs
         IgnoreAllSpace = IgnoreAllSpace,
         IgnoreCase = IgnoreCase,
         StrictEol = StrictEol,
+        Delimiter = Format.Delimiter switch { null => null, (byte)'\t' => "tab", byte d => ((char)d).ToString() },
+        Quotes = Format.Quotes,
         OldEncoding = Format.OldEncoding?.ToString(),
         NewEncoding = Format.NewEncoding?.ToString(),
     };

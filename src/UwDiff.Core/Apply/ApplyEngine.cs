@@ -180,8 +180,8 @@ public sealed class ApplyEngine
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var res = new ApplyResult();
-        if (Path.GetFullPath(_o.OutPath) == Path.GetFullPath(_o.OldPath) || Path.GetFullPath(_o.OutPath) == Path.GetFullPath(_o.NewPath))
-            throw new ArgumentException("書き出し先が旧か新と同じです（元のファイルは変えません。別の名前にしてください）");
+        // 書き出し先が旧・新・差分と同じファイルなら止める（リンクをたどって比べる。元のファイルは変えない）
+        OutputGuard.Check(_o.OutPath, "反映の結果", _o.OldPath, _o.NewPath, _o.DiffPath);
 
         CsvFile fo = CsvFile.Probe(_o.OldPath, _o.OldEncoding, _o.Delimiter, _o.Quotes);
         CsvFile fn = CsvFile.Probe(_o.NewPath, _o.NewEncoding, _o.Delimiter, _o.Quotes);
@@ -200,7 +200,8 @@ public sealed class ApplyEngine
         int[]? keyN = res.DiffAdded > 0 ? keyNames.Select(fn.FindColumn).ToArray() : null;
 
         byte[] tmp = new byte[1 << 16];
-        using (var outFs = new FileStream(_o.OutPath, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20))
+        // 一時ファイルに書き、書き終えてから出力先の名前にする
+        using (OutputGuard.SafeFile outFs = OutputGuard.SafeFile.Create(_o.OutPath))
         {
             outFs.Write(TextEncodings.Bom(fo.Encoding, fo.BomLength));
             using Stream output = TextEncodings.IsAsciiCompatible(fo.Encoding)
@@ -285,6 +286,8 @@ public sealed class ApplyEngine
                 }
             }
             output.Write(w.WrittenSpan);
+            output.Dispose();   // 変換の残りを書き出してから
+            outFs.Commit();
         }
 
         foreach (Entry e in changes.All.Concat(adds.All))
@@ -502,6 +505,14 @@ public sealed class ApplyEngine
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
         public override void Write(ReadOnlySpan<byte> buffer) => inner.Write(buffer);
-        protected override void Dispose(bool disposing) => inner.Flush();
+        private bool _disposed;
+
+        // 入れ替える前に 1 回だけ書き出す（2 回目は、もう閉じた書き出し先に触らない）
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            inner.Flush();
+        }
     }
 }

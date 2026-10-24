@@ -119,6 +119,7 @@ public sealed class KeyedDiffEngine
     {
         var res = new KeyedDiffResult();
         var total = Stopwatch.StartNew();
+        OutputGuard.Check(_o.OutPath, "差分", _o.OldPath, _o.NewPath);
         bool whole = _o.WholeLine;
         CheckDuplicates = _o.CheckDuplicates && !whole;
         Quotes = _o.Quotes && !whole;
@@ -310,7 +311,10 @@ public sealed class KeyedDiffEngine
 
         if (_o.OutPath != null)
         {
-            using var outFs = new FileStream(_o.OutPath, _o.AppendOutput ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
+            // 1 回目（見出しから書く）は一時ファイルに書いてから入れ替える。Excel の 2 枚目からは、できた差分の後ろに足す
+            using FileStream outFs = _o.AppendOutput
+                ? new FileStream(_o.OutPath, FileMode.Append, FileAccess.Write, FileShare.None, 1 << 20)
+                : OutputGuard.SafeFile.Create(_o.OutPath);
             var head = new ArrayBufferWriter<byte>();
             head.Write("区分"u8);
             if (_o.ExtraColumn is { } extra)
@@ -326,6 +330,7 @@ public sealed class KeyedDiffEngine
             head.Write(",列,旧値,新値\n"u8);
             if (!_o.AppendOutput) outFs.Write(head.WrittenSpan);
             foreach (Worker w in _workers) w.Sink.CopyTo(outFs);
+            (outFs as OutputGuard.SafeFile)?.Commit();
         }
         finish.Stop();
         Arena.ReleaseSpare();

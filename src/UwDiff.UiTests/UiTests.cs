@@ -300,6 +300,24 @@ public class UiTests
     }
 
     [AvaloniaFact]
+    public async Task 区切りと引用符の指定で比べた表を画面から反映する()
+    {
+        Loc.Set(true);
+        // セミコロン区切り・引用符を使わない（値の中の " は普通の文字）
+        string o = Write("semi_old.txt", "id;x;memo\n1;a;5\" pipe\n2;b;x\n");
+        string n = Write("semi_new.txt", "id;x;memo\n1;A;5\" pipe\n3;c;y\n");
+        var w = Open();
+        await w.CompareAsync(o, n, new[] { "-key", "id", "-d", ";", "-quote", "off" });
+        var v = Current<TableDiffView>(w);
+        await WaitUntil(() => v._visible.Length == 3, "差分の行が出ない");   // 変更 1 の x・削除 2・追加 3
+        string outPath = Path.Combine(Work, "semi_applied.txt");
+        var r = await v.ApplyToAsync(outPath);
+        Assert.Equal(0, r.ExitCode);
+        Assert.Equal("id;x;memo\n1;A;5\" pipe\n3;c;y\n", File.ReadAllText(outPath));
+        w.Close();
+    }
+
+    [AvaloniaFact]
     public async Task フォルダのときだけ含める除くを使える()
     {
         Loc.Set(true);

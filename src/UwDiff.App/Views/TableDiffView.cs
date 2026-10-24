@@ -228,6 +228,9 @@ public sealed class TableDiffView : DockPanel, IResultView
             }
         });
         var args = new List<string> { "apply", _pkg.Old, _pkg.New, sel, "-o", outPath, "-q" };
+        // 比べたときと同じ区切り・引用符の扱いで読む（-d ;・-quote off で比べた表も反映できるように）
+        if (_pkg.Delimiter != null) { args.Add("-d"); args.Add(_pkg.Delimiter); }
+        if (!_pkg.Quotes) { args.Add("-quote"); args.Add("off"); }
         if (_pkg.OldEncoding != null) { args.Add("-enc-old"); args.Add(_pkg.OldEncoding); }
         if (_pkg.NewEncoding != null) { args.Add("-enc-new"); args.Add(_pkg.NewEncoding); }
         UvdRunner.Outcome o = await UvdRunner.RunAsync(args.ToArray(), null);

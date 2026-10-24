@@ -1,3 +1,4 @@
+using UwDiff.Core;
 using UwDiff.Core.Apply;
 
 namespace Uvd.Cli;
@@ -28,6 +29,7 @@ internal static class Apply
         }
         if (pos.Count != 3 || outPath == null)
             throw new ArgumentException("使い方: uvd apply 旧 新 差分.csv -o 結果（-h で詳しく）");
+        OutputGuard.Check(outPath, "反映の結果（-o）", pos[0], pos[1], pos[2]);
 
         ApplyResult r = new ApplyEngine(new ApplyOptions
         {

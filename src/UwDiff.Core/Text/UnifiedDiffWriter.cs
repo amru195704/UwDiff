@@ -18,8 +18,11 @@ public sealed class UnifiedDiffWriter : ITextDiffSink, IDisposable
     private readonly Func<string> _tempPath;
     private bool _headerWritten;
 
-    private readonly List<byte[]> _ring = new();     // 変更の前の文脈（まとまりを開く前の、直前の同じ行）
-    private readonly List<byte[]> _tail = new();     // まとまりを開いた後、最後の変更から続く同じ行（2×context 行まで）
+    /// <summary>文脈の 1 行（同じ行。最後の行で改行が無ければ NoEol。旧と新で改行の有無が違えば同じ行にならない）。</summary>
+    private readonly record struct Ctx(byte[] Line, bool NoEol);
+
+    private readonly List<Ctx> _ring = new();     // 変更の前の文脈（まとまりを開く前の、直前の同じ行）
+    private readonly List<Ctx> _tail = new();     // まとまりを開いた後、最後の変更から続く同じ行（2×context 行まで）
     private long _tailCount;
     private bool _open;
     private long _oldStart, _newStart, _oldCount, _newCount;
@@ -47,11 +50,11 @@ public sealed class UnifiedDiffWriter : ITextDiffSink, IDisposable
     {
         if (!_open)
         {
-            for (int i = Math.Max(0, count - _ctx); i < count; i++) PushRing(a.Line(i).ToArray());
+            for (int i = Math.Max(0, count - _ctx); i < count; i++) PushRing(Take(a, i));
             return;
         }
         int k = 0;
-        while (k < count && _tail.Count < 2 * _ctx) _tail.Add(a.Line(k++).ToArray());
+        while (k < count && _tail.Count < 2 * _ctx) { _tail.Add(Take(a, k)); k++; }
         _tailCount += count;
         if (_tailCount <= 2 * _ctx) return;
 
@@ -62,12 +65,12 @@ public sealed class UnifiedDiffWriter : ITextDiffSink, IDisposable
         int rest = count - k;
         if (rest >= _ctx)
         {
-            for (int i = count - _ctx; i < count; i++) _ring.Add(a.Line(i).ToArray());
+            for (int i = count - _ctx; i < count; i++) _ring.Add(Take(a, i));
         }
         else
         {
             for (int i = Math.Max(0, _tail.Count - (_ctx - rest)); i < _tail.Count; i++) _ring.Add(_tail[i]);
-            for (int i = k; i < count; i++) _ring.Add(a.Line(i).ToArray());
+            for (int i = k; i < count; i++) _ring.Add(Take(a, i));
         }
         _tail.Clear();
         _tailCount = 0;
@@ -81,12 +84,12 @@ public sealed class UnifiedDiffWriter : ITextDiffSink, IDisposable
             _oldStart = a.LineNo - _ring.Count;
             _newStart = b.LineNo - _ring.Count;
             _oldCount = _newCount = 0;
-            foreach (byte[] l in _ring) Context(l);
+            foreach (Ctx l in _ring) Context(l);
             _ring.Clear();
         }
         else
         {
-            foreach (byte[] l in _tail) Context(l);
+            foreach (Ctx l in _tail) Context(l);
         }
         _tail.Clear();
         _tailCount = 0;
@@ -106,16 +109,18 @@ public sealed class UnifiedDiffWriter : ITextDiffSink, IDisposable
         _out.Flush();
     }
 
-    private void PushRing(byte[] line)
+    private static Ctx Take(TextDiffCursor a, int i) => new(a.Line(i).ToArray(), a.IsUnterminated(i));
+
+    private void PushRing(Ctx line)
     {
         if (_ctx == 0) return;
         if (_ring.Count == _ctx) _ring.RemoveAt(0);
         _ring.Add(line);
     }
 
-    private void Context(byte[] line)
+    private void Context(Ctx line)
     {
-        Put((byte)' ', line, false);
+        Put((byte)' ', line.Line, line.NoEol);
         _oldCount++;
         _newCount++;
     }

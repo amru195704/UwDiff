@@ -132,14 +132,16 @@ public sealed class TextDiffEngine
         res.OldEncoding = TextEncodings.Name(eo);
         res.NewEncoding = TextEncodings.Name(en);
         bool Trans(FileEncoding e) => !same && e != FileEncoding.Utf8;
+        // CP932 のバイト列のまま比べるときは、大文字・小文字をそろえる所で 2 バイト目を変えない
+        LineCompare cmp = _o.Compare.For(same && eo == FileEncoding.Cp932);
         var (so, _) = OpenWork(new TextSource { Name = oldSrc.Name, Open = oldSrc.Open, Encoding = eo }, Trans);
         var (sn, _) = OpenWork(new TextSource { Name = newSrc.Name, Open = newSrc.Open, Encoding = en }, Trans);
 
         using var cts = new CancellationTokenSource();
         var qa = new BlockingCollection<LineChunk>(3);
         var qb = new BlockingCollection<LineChunk>(3);
-        var pa = new LineProducer(so, _o.Compare, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
-        var pb = new LineProducer(sn, _o.Compare, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
+        var pa = new LineProducer(so, cmp, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
+        var pb = new LineProducer(sn, cmp, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
         res.OldRaw = !Trans(eo);
         res.NewRaw = !Trans(en);
         Exception? failure = null;
@@ -171,8 +173,8 @@ public sealed class TextDiffEngine
                 x.Get(i, out byte[] dx, out int sx, out int lx, out ulong hx);
                 y.Get(j, out byte[] dy, out int sy, out int ly, out ulong hy);
                 if (hx != hy) return false;
-                ReadOnlySpan<byte> u = _o.Compare.Normalize(dx.AsSpan(sx, lx), ref t1);
-                ReadOnlySpan<byte> v = _o.Compare.Normalize(dy.AsSpan(sy, ly), ref t2);
+                ReadOnlySpan<byte> u = cmp.Normalize(dx.AsSpan(sx, lx), ref t1);
+                ReadOnlySpan<byte> v = cmp.Normalize(dy.AsSpan(sy, ly), ref t2);
                 return u.SequenceEqual(v);
             }
 

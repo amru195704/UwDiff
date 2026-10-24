@@ -15,6 +15,7 @@
 #      - テキストの比較（段階 2）: 同じデータをテキストとして比べ、unified diff を旧に当てると新になるか（check_unified.py）
 #   4) テキストの比較の危ないところ（tools/textcases.py）: patch で新に戻るか・差分が diff と同じくらい小さいか ほか
 #   5) 形式とフォルダ（tools/formatcases.py）: 圧縮 7 形式・Word・Excel・PDF・フォルダ対フォルダ
+#   7) 元のファイルを壊さないか（tools/safetycases.py）: 出力先が入力と同じ・リンク経由・失敗しても元のまま・CP932 の -i・改行なし
 #   6) 画面（src/UwDiff.UiTests）: テキスト・表・フォルダの画面、採った変更の反映、比べた索引の一致
 # 使い方: ./tools/run_tests.sh [大きさ...]          既定: 10MB 100MB
 #   例: ./tools/run_tests.sh 10MB 100MB 1GB 10GB
@@ -96,6 +97,9 @@ result "テキストの危ないところ（5,000 行）" "$( [ ${RC} -eq 0 ] &&
 
 timed "formats" "${PY}" -I "${SELFDIR}/formatcases.py" "${UVD}" "${OUT}/formats"
 result "形式とフォルダ（圧縮 7 形式・Word・Excel・PDF・フォルダ）" "$( [ ${RC} -eq 0 ] && echo 合格 || echo 不合格 )" "${T}" "-" "$(grep -c '^○' "${OUT}/formats.txt") 件合格・$(grep -c '^×' "${OUT}/formats.txt") 件不合格"
+
+timed "safety" "${PY}" -I "${SELFDIR}/safetycases.py" "${UVD}" "${OUT}/safety"
+result "元のファイルを壊さないか（出力先・リンク・CP932 の -i・改行なし）" "$( [ ${RC} -eq 0 ] && echo 合格 || echo 不合格 )" "${T}" "-" "$(grep -c '^○' "${OUT}/safety.txt") 件合格・$(grep -c '^×' "${OUT}/safety.txt") 件不合格"
 
 # 画面（段階 4）: Avalonia Headless で本物の窓を組み立てて操作する（写しは out/uvd-tests/shots）
 if UVD_SHOTS="${OUT}/shots" dotnet test "${REPO}/src/UwDiff.UiTests" -c Release -v q -nologo > "${OUT}/ui.txt" 2>&1; then UIR=合格; else UIR=不合格; fi

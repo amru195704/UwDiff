@@ -31,6 +31,7 @@ Run-Case "危ないところ（3,000 行）" @("$Repo\tools\edgecases.py", $Uvd,
 Run-Case "危ないところ（10 万行・塊 1MB）" @("$Repo\tools\edgecases.py", $Uvd, "$Work\edge100k", "100000", "-block", "1")
 Run-Case "テキスト（5,000 行）" @("$Repo\tools\textcases.py", $Uvd, "$Work\text", "5000")
 Run-Case "形式とフォルダ" @("$Repo\tools\formatcases.py", $Uvd, "$Work\formats")
+Run-Case "元のファイルを壊さないか" @("$Repo\tools\safetycases.py", $Uvd, "$Work\safety")
 
 # 負荷: 同じ比較を続けて実行し、異常終了（終了コード 2 より大きい・負）が無いか
 $o = "$Work\text\small_edits_old.txt"; $n = "$Work\text\small_edits_new.txt"; $bad = 0

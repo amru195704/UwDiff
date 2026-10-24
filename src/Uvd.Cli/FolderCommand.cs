@@ -43,12 +43,17 @@ internal static class FolderCommand
 
         if (a.OutPath != null)
         {
-            using var w = new StreamWriter(a.OutPath, false, new UTF8Encoding(false), 1 << 16) { NewLine = "\n" };
+            using OutputGuard.SafeFile file = OutputGuard.SafeFile.Create(a.OutPath);
+            // 書き手は入れ替える前に 1 回だけ閉じる（StreamWriter は 2 回目に閉じるときも書き出そうとする）。
+            // 途中で失敗したら、file を閉じるときに一時ファイルが消える
+            var w = new StreamWriter(file, new UTF8Encoding(false), 1 << 16, leaveOpen: true) { NewLine = "\n" };
             w.WriteLine("区分,パス,旧の大きさ,新の大きさ,旧の更新日時,新の更新日時");
             static string T(DateTime? t) => t?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? "";
             static string Q(string s) => s.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s;
             foreach (FolderEntry e in r.Entries)
                 w.WriteLine($"{FolderEntry.KindName(e.Kind)},{Q(e.RelPath)},{(e.Kind == FolderEntryKind.OnlyNew ? "" : e.OldSize)},{(e.Kind == FolderEntryKind.OnlyOld ? "" : e.NewSize)},{T(e.OldTime)},{T(e.NewTime)}");
+            w.Dispose();     // 書き手を閉じてから（中身を書き出して）入れ替える
+            file.Commit();
         }
 
         Console.WriteLine($"ファイル: 旧だけ {r.OnlyOld:N0}／新だけ {r.OnlyNew:N0}／違う {r.Different:N0}／同じ {r.Same:N0}");

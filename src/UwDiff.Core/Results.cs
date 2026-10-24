@@ -20,6 +20,9 @@ public sealed class ResultPackage
     /// <summary>text: 変更の位置のファイル。table・folder: 差分・一覧の CSV。</summary>
     public string? ResultFile { get; set; }
     public List<string> Keys { get; set; } = new();
+    /// <summary>table: 比べたときの区切りの指定（-d に渡す形: ","・"tab"・";"・"|"。null なら自動）と、引用符の扱い（-quote）。反映のときに同じものを渡す。</summary>
+    public string? Delimiter { get; set; }
+    public bool Quotes { get; set; } = true;
     /// <summary>text: 比べたときに作った行の位置の索引（画面がファイルを読み直さずに済む。無ければ画面が作る）。</summary>
     public string? OldIndex { get; set; }
     public string? NewIndex { get; set; }

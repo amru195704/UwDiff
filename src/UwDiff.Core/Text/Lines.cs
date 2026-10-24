@@ -14,6 +14,19 @@ public sealed class LineCompare
     /// <summary>ASCII の大文字・小文字を区別しない。</summary>
     public bool IgnoreCase { get; init; }
 
+    /// <summary>
+    /// 行が CP932 のバイト列のまま（UTF-8 に直さずに比べる）か。CP932 の 2 バイト目は 0x40〜0x7E にもなり、
+    /// 英字の A〜Z（0x41〜0x5A）と重なるので、大文字・小文字をそろえるときに 2 バイト目を変えてはいけない
+    /// （変えると「、」0x8141 と「∥」0x8161 が同じになる）。空白・タブは 2 バイト目に出ない（0x40 未満）。
+    /// </summary>
+    internal bool Cp932 { get; init; }
+
+    /// <summary>行の文字コードに合わせた写し（CP932 のまま比べるときは Cp932 を立てる）。</summary>
+    internal LineCompare For(bool cp932) => cp932 == Cp932 ? this : new LineCompare
+    {
+        IgnoreEol = IgnoreEol, IgnoreSpaceChange = IgnoreSpaceChange, IgnoreAllSpace = IgnoreAllSpace, IgnoreCase = IgnoreCase, Cp932 = cp932,
+    };
+
     internal bool Plain => !IgnoreSpaceChange && !IgnoreAllSpace && !IgnoreCase;
 
     /// <summary>比べる中身（改行を除いた行から、無視する部分を除いたもの）。Plain なら tmp を使わない。</summary>
@@ -24,9 +37,19 @@ public sealed class LineCompare
         if (tmp.Length < line.Length) tmp = new byte[line.Length * 2];
         int o = 0;
         bool space = false;
+        bool trail = false;   // CP932: いまのバイトは 2 バイト文字の 2 バイト目
         foreach (byte b0 in line)
         {
             byte b = b0;
+            if (Cp932 && (trail || (b >= 0x81 && b <= 0x9F) || (b >= 0xE0 && b <= 0xFC)))
+            {
+                // 2 バイト文字は 1 バイト目も 2 バイト目もそのまま（大文字・小文字の変換をしない）
+                if (space && IgnoreSpaceChange && o > 0) tmp[o++] = (byte)' ';
+                space = false;
+                tmp[o++] = b;
+                trail = !trail;
+                continue;
+            }
             bool isSpace = b == (byte)' ' || b == (byte)'\t' || (b == (byte)'\r' && !IgnoreEol);
             if (isSpace && (IgnoreAllSpace || IgnoreSpaceChange))
             {

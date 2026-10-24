@@ -17,6 +17,7 @@ public static class Program
           uvd 旧 新 -unordered [-o 差分.csv]          行の順番を問わずに比べる（同じ行の数まで）
           uvd 旧フォルダ 新フォルダ [-o 一覧.csv]      フォルダどうしを比べる（ファイル名で対応付け）
           uvd apply 旧 新 差分.csv -o 結果             表の差分（採る行だけ残したもの）を旧に反映する
+          uvd -open                                   画面（UwDiff）を開く
           uvd --version                               版数
 
         共通:
@@ -77,6 +78,8 @@ public static class Program
                 Console.WriteLine(Usage);
                 return 0;
             }
+            // uvd -open だけ: 画面を開く（比べるものは画面で選ぶ）
+            if (a.Open && a.Positional.Count == 0) return LaunchGui(null) ? 0 : 2;
             if (a.Positional.Count != 2) throw new ArgumentException("使い方: uvd 旧 新 [-key 列名] [-o 差分]（-h で詳しく）");
             if (a.Open && a.ResultDir == null) a.ResultDir = ResultPackage.NewFolder(a.TempDir);
             if (a.ResultDir != null) Directory.CreateDirectory(a.ResultDir);
@@ -131,9 +134,9 @@ public static class Program
     }
 
     /// <summary>
-    /// 画面（UwDiff）を起動して結果の置き場所を渡す。画面は uvd と同じフォルダに置く（環境変数 UVD_GUI で別の場所も指定できる）。
+    /// 画面（UwDiff）を起動して結果の置き場所を渡す（null なら何も渡さず開くだけ）。画面は uvd と同じフォルダに置く（環境変数 UVD_GUI で別の場所も指定できる）。
     /// </summary>
-    private static void LaunchGui(string resultDir)
+    private static bool LaunchGui(string? resultDir)
     {
         string dir = AppContext.BaseDirectory;
         string? gui = Environment.GetEnvironmentVariable("UVD_GUI");
@@ -147,13 +150,17 @@ public static class Program
         }
         if (string.IsNullOrEmpty(gui) || !File.Exists(gui))
         {
-            Console.Error.WriteLine($"uvd: 画面（UwDiff）が見つかりません（{dir}）。結果は {resultDir} にあります");
-            return;
+            Console.Error.WriteLine($"uvd: 画面（UwDiff）が見つかりません（{dir}）" + (resultDir != null ? $"。結果は {resultDir} にあります" : ""));
+            return false;
         }
         var psi = new System.Diagnostics.ProcessStartInfo(gui) { UseShellExecute = false };
-        psi.ArgumentList.Add(ResultPackage.Argument);
-        psi.ArgumentList.Add(resultDir);
+        if (resultDir != null)
+        {
+            psi.ArgumentList.Add(ResultPackage.Argument);
+            psi.ArgumentList.Add(resultDir);
+        }
         System.Diagnostics.Process.Start(psi);
+        return true;
     }
 
     /// <summary>書いたものを 2 か所へ送る（標準出力と、画面に渡す要約）。</summary>

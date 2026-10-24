@@ -25,7 +25,7 @@ public enum RowKind { Same, Changed, Deleted, Inserted, Fold }
 /// 変更の所は、旧の行と新の行を上から順に組にして並べ、組になった行は文字単位の違いを濃く塗る。
 /// 「変更の所だけ」にすると、同じ行が続く所を前後 3 行だけ残して畳む。
 /// </summary>
-public sealed class TextDiffView : DockPanel
+public sealed class TextDiffView : DockPanel, IResultView
 {
     private const int Context = 3;
 
@@ -33,7 +33,11 @@ public sealed class TextDiffView : DockPanel
     private readonly string _tempDir;
     internal readonly ListBox _list = new();
     internal readonly TextBlock _summary = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0) };
-    internal readonly CheckBox _foldBox = new() { Content = "変更の所だけ", IsChecked = true, Margin = new Thickness(12, 0, 0, 0) };
+    internal readonly CheckBox _foldBox = new() { IsChecked = true, Margin = new Thickness(12, 0, 0, 0) };
+    private readonly Button _prev = new(), _next = new() { Margin = new Thickness(6, 0, 0, 0) };
+    private readonly TextBlock _oldHead = new() { TextTrimming = TextTrimming.CharacterEllipsis, FontWeight = FontWeight.SemiBold };
+    private readonly TextBlock _newHead = new() { TextTrimming = TextTrimming.CharacterEllipsis, FontWeight = FontWeight.SemiBold };
+    private string? _error;
     private readonly ProgressBar _progress = new() { Minimum = 0, Maximum = 1, Height = 4, IsVisible = false };
     private LineCache? _old, _new;
     private DisplayFile? _oldFile, _newFile;
@@ -51,18 +55,18 @@ public sealed class TextDiffView : DockPanel
     {
         _pkg = pkg;
         _tempDir = tempDir;
-        var prev = new Button { Content = "◀ 前の変更" };
-        var next = new Button { Content = "次の変更 ▶", Margin = new Thickness(6, 0, 0, 0) };
-        prev.Click += (_, _) => Jump(-1);
-        next.Click += (_, _) => Jump(+1);
+        _prev.Click += (_, _) => Jump(-1);
+        _next.Click += (_, _) => Jump(+1);
         _foldBox.IsCheckedChanged += (_, _) => Rebuild();
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 6), Children = { prev, next, _foldBox, _summary } };
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 6), Children = { _prev, _next, _foldBox, _summary } };
         SetDock(bar, Dock.Top);
         Children.Add(bar);
 
         var head = new Grid { ColumnDefinitions = new ColumnDefinitions("92,*,92,*"), Margin = new Thickness(8, 0, 8, 4) };
-        head.Children.Add(Cell(new TextBlock { Text = "旧: " + pkg.Old, TextTrimming = TextTrimming.CharacterEllipsis, FontWeight = FontWeight.SemiBold }, 0, 2));
-        head.Children.Add(Cell(new TextBlock { Text = "新: " + pkg.New, TextTrimming = TextTrimming.CharacterEllipsis, FontWeight = FontWeight.SemiBold }, 2, 2));
+        head.Children.Add(Cell(_oldHead, 0, 2));
+        head.Children.Add(Cell(_newHead, 2, 2));
+        ToolTip.SetTip(_oldHead, pkg.Old);
+        ToolTip.SetTip(_newHead, pkg.New);
         SetDock(head, Dock.Top);
         Children.Add(head);
         SetDock(_progress, Dock.Top);
@@ -76,7 +80,25 @@ public sealed class TextDiffView : DockPanel
         {
             if (e.Key == Avalonia.Input.Key.F7) Jump((e.KeyModifiers & Avalonia.Input.KeyModifiers.Shift) != 0 ? -1 : +1);
         };
+        Texts();
+        Loc.Changed += Texts;
         _ = LoadAsync();
+    }
+
+    /// <summary>文言を、いまの言語で入れ直す（行の見た目は作り直す）。</summary>
+    private void Texts()
+    {
+        _prev.Content = Loc.T("PrevChange");
+        _next.Content = Loc.T("NextChange");
+        _foldBox.Content = Loc.T("ChangesOnly");
+        ToolTip.SetTip(_prev, Loc.T("TipPrevChange"));
+        ToolTip.SetTip(_next, Loc.T("TipNextChange"));
+        ToolTip.SetTip(_foldBox, Loc.T("TipChangesOnly"));
+        _oldHead.Text = Loc.T("Old") + ": " + _pkg.Old;
+        _newHead.Text = Loc.T("New") + ": " + _pkg.New;
+        if (_error != null) _summary.Text = Loc.F("CannotRead", _error);
+        else if (_old != null) Rebuild();
+        else _summary.Text = Loc.T("Indexing");
     }
 
     private static Control Cell(Control c, int col, int span = 1)
@@ -89,7 +111,7 @@ public sealed class TextDiffView : DockPanel
     private async Task LoadAsync()
     {
         _progress.IsVisible = true;
-        _summary.Text = "行の位置を調べています…";
+        _summary.Text = Loc.T("Indexing");
         try
         {
             FileEncoding? eo = _pkg.OldEncoding is { } a ? TextEncodings.Parse(a) : null;
@@ -107,7 +129,8 @@ public sealed class TextDiffView : DockPanel
         }
         catch (Exception ex)
         {
-            _summary.Text = "読めません: " + ex.Message;
+            _error = ex.Message;
+            _summary.Text = Loc.F("CannotRead", ex.Message);
         }
         finally
         {
@@ -157,8 +180,8 @@ public sealed class TextDiffView : DockPanel
         if (total > int.MaxValue) total = int.MaxValue;
         _list.ItemsSource = new VirtualList<TextRow>((int)total, MakeRow);
         long del = _hunks.Sum(h => (long)h.OldCount), ins = _hunks.Sum(h => (long)h.NewCount);
-        _summary.Text = _hunks.Count == 0 ? $"同じ（{_old.Lines:N0} 行）"
-            : $"変更 {_hunks.Count:N0} か所・削除 {del:N0} 行・追加 {ins:N0} 行（旧 {_old.Lines:N0} 行／新 {_new.Lines:N0} 行）";
+        _summary.Text = _hunks.Count == 0 ? Loc.F("TextSame", _old.Lines)
+            : Loc.F("TextSummary", _hunks.Count, del, ins, _old.Lines, _new.Lines);
     }
 
     private TextRow MakeRow(int row)
@@ -204,9 +227,10 @@ public sealed class TextDiffView : DockPanel
         _list.ScrollIntoView(target);
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    /// <summary>タブを閉じたとき: 表示用に書き出した一時ファイルを消す。</summary>
+    public void Release()
     {
-        base.OnDetachedFromVisualTree(e);
+        Loc.Changed -= Texts;
         foreach (DisplayFile? f in new[] { _oldFile, _newFile })
             if (f is { Temporary: true }) try { File.Delete(f.Path); } catch (IOException) { }
     }
@@ -245,7 +269,7 @@ public sealed class TextRowView : Grid
         if (DataContext is not TextRow r) return;
         bool fold = r.Kind == RowKind.Fold;
         _fold.IsVisible = fold;
-        _fold.Text = fold ? $"…… 同じ行 {r.FoldCount:N0} 行 ……" : "";
+        _fold.Text = fold ? Loc.F("FoldRow", r.FoldCount) : "";
         _oldNo.Text = r.OldNo?.ToString("N0") ?? "";
         _newNo.Text = r.NewNo?.ToString("N0") ?? "";
         _oldBg.Background = r.Kind is RowKind.Deleted or RowKind.Changed ? Palette.Deleted : null;

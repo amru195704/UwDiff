@@ -15,12 +15,19 @@ public sealed class FolderRow
 /// フォルダの比較の一覧（区分,パス,旧の大きさ,新の大きさ,旧の更新日時,新の更新日時）。区分で絞り込み、
 /// 「違う」の行をダブルクリックすると、その 1 組の差分を新しいタブで開く。
 /// </summary>
-public sealed class FolderDiffView : DockPanel
+public sealed class FolderDiffView : DockPanel, IResultView
 {
     private readonly ResultPackage _pkg;
     private readonly Action<string, string> _openPair;
     internal readonly ListBox _list = new();
-    private readonly ComboBox _kind = new() { ItemsSource = new[] { "違いだけ", "すべて", "違う", "旧だけ", "新だけ", "同じ" }, SelectedIndex = 0, Width = 120 };
+    /// <summary>区分の絞り込み（並びは KindValues。一覧の区分は日本語なので、値はそのまま、見せる文字だけ訳す）。</summary>
+    private readonly ComboBox _kind = new() { Width = 130 };
+    private static readonly string[] KindValues = { "違いだけ", "すべて", "違う", "旧だけ", "新だけ", "同じ" };
+    private static readonly string[] KindKeys = { "DiffsOnly", "All", "Different", "OnlyOld", "OnlyNew", "Same" };
+    private readonly TextBlock _kindLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+    private readonly TextBlock _hint = new() { Foreground = Palette.Muted, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Grid _head = RowGrid();
+    private bool _relabeling;
     internal readonly TextBlock _summary = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0) };
     private CsvRowIndex? _index;
     private int[] _visible = Array.Empty<int>();
@@ -29,21 +36,18 @@ public sealed class FolderDiffView : DockPanel
     {
         _pkg = pkg;
         _openPair = openPair;
-        _kind.SelectionChanged += (_, _) => Filter();
+        _kind.SelectionChanged += (_, _) => { if (!_relabeling) Filter(); };
         var bar = new StackPanel
         {
             Orientation = Orientation.Horizontal, Margin = new Thickness(8, 6),
-            Children = { new TextBlock { Text = "区分", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) }, _kind, _summary,
-                         new TextBlock { Text = "（「違う」の行をダブルクリックで差分を開く）", Foreground = Palette.Muted, VerticalAlignment = VerticalAlignment.Center } },
+            Children = { _kindLabel, _kind, _summary, _hint },
         };
         SetDock(bar, Dock.Top);
         Children.Add(bar);
-        var head = RowGrid();
-        string[] names = { "区分", "パス", "旧の大きさ", "新の大きさ", "旧の更新日時", "新の更新日時" };
-        for (int i = 0; i < names.Length; i++) { ((TextBlock)head.Children[i]).Text = names[i]; ((TextBlock)head.Children[i]).FontWeight = FontWeight.SemiBold; }
-        head.Margin = new Thickness(8, 0, 8, 2);
-        SetDock(head, Dock.Top);
-        Children.Add(head);
+        foreach (TextBlock t in _head.Children.OfType<TextBlock>()) t.FontWeight = FontWeight.SemiBold;
+        _head.Margin = new Thickness(8, 0, 8, 2);
+        SetDock(_head, Dock.Top);
+        Children.Add(_head);
         _list.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<FolderRow>((_, _) => new FolderRowView(), supportsRecycling: true);
         _list.FontSize = 12;
         _list.DoubleTapped += (_, _) =>
@@ -52,8 +56,28 @@ public sealed class FolderDiffView : DockPanel
                 _openPair(Path.Combine(_pkg.Old, r.Cells[1]), Path.Combine(_pkg.New, r.Cells[1]));
         };
         Children.Add(_list);
+        Texts();
+        Loc.Changed += Texts;
         _ = LoadAsync();
     }
+
+    /// <summary>文言を、いまの言語で入れ直す。</summary>
+    private void Texts()
+    {
+        int sel = Math.Max(0, _kind.SelectedIndex);
+        _relabeling = true;
+        _kind.ItemsSource = KindKeys.Select(Loc.T).ToArray();
+        _kind.SelectedIndex = sel;
+        _relabeling = false;
+        _kindLabel.Text = Loc.T("Kind");
+        _hint.Text = Loc.T("FolderHint");
+        ToolTip.SetTip(_kind, Loc.T("TipFolderKind"));
+        string[] names = { "Kind", "Path", "OldSize", "NewSize", "OldTime", "NewTime" };
+        for (int i = 0; i < names.Length; i++) ((TextBlock)_head.Children[i]).Text = Loc.T(names[i]);
+        if (_index != null) Filter();
+    }
+
+    public void Release() => Loc.Changed -= Texts;
 
     internal static Grid RowGrid() => Fill(new Grid());
 
@@ -82,7 +106,7 @@ public sealed class FolderDiffView : DockPanel
     private void Filter()
     {
         if (_index == null) return;
-        string k = _kind.SelectedItem as string ?? "違いだけ";
+        string k = KindValues[Math.Clamp(_kind.SelectedIndex, 0, KindValues.Length - 1)];
         var v = new List<int>();
         for (int i = 0; i < _index.Count; i++)
         {
@@ -92,7 +116,7 @@ public sealed class FolderDiffView : DockPanel
         _visible = v.ToArray();
         _list.ItemsSource = new VirtualList<FolderRow>(_visible.Length, j => new FolderRow { Cells = _index.Row(_visible[j]) });
         int same = _index.Kinds.Count(x => x == "同じ"), diff = _index.Kinds.Count(x => x == "違う"), oo = _index.Kinds.Count(x => x == "旧だけ"), on = _index.Kinds.Count(x => x == "新だけ");
-        _summary.Text = $"旧だけ {oo:N0}・新だけ {on:N0}・違う {diff:N0}・同じ {same:N0}";
+        _summary.Text = Loc.F("FolderSummary", oo, on, diff, same);
     }
 
     private sealed class FolderRowView : Grid
@@ -103,7 +127,8 @@ public sealed class FolderDiffView : DockPanel
         {
             base.OnDataContextChanged(e);
             if (DataContext is not FolderRow r) return;
-            for (int i = 0; i < Children.Count; i++) ((TextBlock)Children[i]).Text = i < r.Cells.Length ? Fmt(i, r.Cells[i]) : "";
+            for (int i = 0; i < Children.Count; i++) ((TextBlock)Children[i]).Text = i < r.Cells.Length ? (i == 0 ? Loc.Kind(r.Cells[0]) : Fmt(i, r.Cells[i])) : "";
+            ToolTip.SetTip(this, r.Cells.Length > 1 ? r.Cells[1] : null);
             Background = r.Cells.Length > 0 ? Palette.OfKind(r.Cells[0]) : null;
         }
 

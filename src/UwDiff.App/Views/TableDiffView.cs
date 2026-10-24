@@ -22,15 +22,22 @@ public sealed class DiffRow
 /// 表の差分（区分,シート?,キー列…,列,旧値,新値）を一覧で見せる。区分で絞り込み、文字で探し、採る行を選んで旧に反映した新しいファイルを書き出す。
 /// 差分 CSV は全部をメモリに載せず、行の位置の索引から画面に出る行だけ読む。
 /// </summary>
-public sealed class TableDiffView : DockPanel
+public sealed class TableDiffView : DockPanel, IResultView
 {
     private readonly ResultPackage _pkg;
     private readonly Action<string, bool> _status;
     internal readonly ListBox _list = new();
-    internal readonly ComboBox _kind = new() { ItemsSource = new[] { "すべて", "追加", "削除", "変更" }, SelectedIndex = 0, Width = 110 };
-    internal readonly TextBox _search = new() { PlaceholderText = "キー・値で探す（Enter）", Width = 220, Margin = new Thickness(8, 0, 0, 0) };
+    /// <summary>区分の絞り込み（並びは KindValues。差分 CSV の区分は日本語なので、値はそのまま、見せる文字だけ訳す）。</summary>
+    internal readonly ComboBox _kind = new() { Width = 120 };
+    private static readonly string[] KindValues = { "すべて", "追加", "削除", "変更" };
+    private static readonly string[] KindKeys = { "All", "Added", "Deleted", "Changed" };
+    internal readonly TextBox _search = new() { Width = 220, Margin = new Thickness(8, 0, 0, 0) };
     internal readonly TextBlock _summary = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0) };
-    private readonly Button _apply = new() { Content = "採った変更を反映…", Margin = new Thickness(8, 0, 0, 0) };
+    private readonly Button _apply = new() { Margin = new Thickness(8, 0, 0, 0) };
+    private readonly Button _all = new() { Margin = new Thickness(8, 0, 0, 0) };
+    private readonly Button _none = new() { Margin = new Thickness(4, 0, 0, 0) };
+    private readonly TextBlock _kindLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+    private Grid? _head;
     private CsvRowIndex? _index;
     internal bool[] _taken = Array.Empty<bool>();
     internal int[] _visible = Array.Empty<int>();
@@ -42,38 +49,78 @@ public sealed class TableDiffView : DockPanel
     {
         _pkg = pkg;
         _status = status;
-        var all = new Button { Content = "すべて採る", Margin = new Thickness(8, 0, 0, 0) };
-        var none = new Button { Content = "すべて外す", Margin = new Thickness(4, 0, 0, 0) };
-        all.Click += (_, _) => SetTaken(true);
-        none.Click += (_, _) => SetTaken(false);
+        _all.Click += (_, _) => SetTaken(true);
+        _none.Click += (_, _) => SetTaken(false);
         _apply.Click += async (_, _) => await ApplyAsync();
-        _kind.SelectionChanged += (_, _) => Filter();
+        _kind.SelectionChanged += (_, _) => { if (!_relabeling) Filter(); };
         _search.KeyDown += (_, e) => { if (e.Key == Avalonia.Input.Key.Enter) Filter(); };
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 6), Children = { new TextBlock { Text = "区分", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) }, _kind, _search, all, none, _apply, _summary } };
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 6), Children = { _kindLabel, _kind, _search, _all, _none, _apply, _summary } };
         SetDock(bar, Dock.Top);
         Children.Add(bar);
         _list.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<DiffRow>((_, _) => new DiffRowView(this), supportsRecycling: true);
         _list.FontSize = 12;
+        Texts();
+        Loc.Changed += Texts;
         _ = LoadAsync();
     }
+
+    private bool _relabeling;
+
+    /// <summary>文言を、いまの言語で入れ直す。</summary>
+    private void Texts()
+    {
+        int sel = Math.Max(0, _kind.SelectedIndex);
+        _relabeling = true;
+        _kind.ItemsSource = KindKeys.Select(Loc.T).ToArray();
+        _kind.SelectedIndex = sel;
+        _relabeling = false;
+        _kindLabel.Text = Loc.T("Kind");
+        _search.PlaceholderText = Loc.T("SearchPlaceholder");
+        _all.Content = Loc.T("TakeAll");
+        _none.Content = Loc.T("TakeNone");
+        _apply.Content = Loc.T("Apply");
+        ToolTip.SetTip(_kind, Loc.T("TipKind"));
+        ToolTip.SetTip(_search, Loc.T("TipSearch"));
+        ToolTip.SetTip(_all, Loc.T("TipTakeAll"));
+        ToolTip.SetTip(_none, Loc.T("TipTakeNone"));
+        ToolTip.SetTip(_apply, Loc.T(_index != null && !_apply.IsEnabled ? "TipApplyDisabled" : "TipApply"));
+        // 反映できないときも理由が見えるよう、押せないボタンにもツールチップを出す
+        ToolTip.SetShowOnDisabled(_apply, true);
+        if (_head != null) for (int i = 0; i < _header.Length; i++) ((TextBlock)_head.Children[i + 1]).Text = HeaderName(_header[i]);
+        if (_head != null) ((TextBlock)_head.Children[0]).Text = Loc.T("Take");
+        if (_index != null) { UpdateSummary(); _list.ItemsSource = MakeList(); }
+        else _summary.Text = Loc.T("Reading");
+    }
+
+    /// <summary>差分 CSV の見出し（日本語）を、いまの言語に（キー列の名前はそのまま）。</summary>
+    private static string HeaderName(string h) => Loc.Ja ? h : h switch
+    {
+        "区分" => "Kind",
+        "シート" => "Sheet",
+        "列" => "Column",
+        "旧値" => "Old value",
+        "新値" => "New value",
+        "行" => "Line",
+        _ => h,
+    };
 
     private async Task LoadAsync()
     {
         if (_pkg.ResultFile == null) return;
-        _summary.Text = "読んでいます…";
+        _summary.Text = Loc.T("Reading");
         _index = await Task.Run(() => CsvRowIndex.Build(_pkg.ResultFile));
         _header = _index.Header;
         _raw = _index.OpenRaw();
         _taken = Enumerable.Repeat(true, _index.Count).ToArray();
         // 見出しの行
-        var head = DiffRowView.Layout(_header.Length, isHeader: true);
-        for (int i = 0; i < _header.Length; i++) ((TextBlock)head.Children[i + 1]).Text = _header[i];
-        head.Margin = new Thickness(8, 0, 8, 2);
-        SetDock(head, Dock.Top);
-        Children.Insert(1, head);
+        _head = DiffRowView.Layout(_header.Length, isHeader: true);
+        _head.Margin = new Thickness(8, 0, 8, 2);
+        SetDock(_head, Dock.Top);
+        Children.Insert(1, _head);
         Children.Add(_list);
         // 反映できるのは CSV・TSV の照合（Excel のシート・順番を問わない比較は差分の一覧まで）
         _apply.IsEnabled = _pkg.Mode == "table" && !_header.Contains("シート");
+        Texts();
         Filter();
     }
 
@@ -109,7 +156,7 @@ public sealed class TableDiffView : DockPanel
     internal async void Filter()
     {
         if (_index == null) return;
-        string kind = _kind.SelectedItem as string ?? "すべて";
+        string kind = KindValues[Math.Clamp(_kind.SelectedIndex, 0, KindValues.Length - 1)];
         string q = _search.Text?.Trim() ?? "";
         CsvRowIndex index = _index;
         // 文字で探すときは全部の行を読むので、画面を止めないよう裏で
@@ -136,7 +183,7 @@ public sealed class TableDiffView : DockPanel
         if (_index == null) return;
         int a = 0, d = 0, c = 0;
         foreach (string k in _index.Kinds) { if (k == "追加") a++; else if (k == "削除") d++; else if (k == "変更") c++; }
-        _summary.Text = $"追加 {a:N0}・削除 {d:N0}・変更 {c:N0} セル／表示 {_visible.Length:N0}・採る {_taken.Count(x => x):N0}";
+        _summary.Text = Loc.F("TableSummary", a, d, c, _visible.Length, _taken.Count(x => x));
     }
 
     /// <summary>採った行だけの差分を書き、uvd apply で旧に反映した新しいファイルを書き出す。</summary>
@@ -146,8 +193,8 @@ public sealed class TableDiffView : DockPanel
         string ext = Path.GetExtension(_pkg.Old);
         IStorageFile? file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "反映したファイルの保存先",
-            SuggestedFileName = Path.GetFileNameWithoutExtension(_pkg.Old) + "_反映" + ext,
+            Title = Loc.T("SaveApplied"),
+            SuggestedFileName = Path.GetFileNameWithoutExtension(_pkg.Old) + Loc.T("AppliedSuffix") + ext,
         });
         if (file?.TryGetLocalPath() is not { } outPath) return;
         await ApplyToAsync(outPath);
@@ -185,14 +232,15 @@ public sealed class TableDiffView : DockPanel
         if (_pkg.NewEncoding != null) { args.Add("-enc-new"); args.Add(_pkg.NewEncoding); }
         UvdRunner.Outcome o = await UvdRunner.RunAsync(args.ToArray(), null);
         string msg = (o.Output + "\n" + o.Error).Trim();
-        _status(o.ExitCode == 0 ? "反映しました: " + outPath : o.ExitCode == 1 ? "反映しました（反映しなかったものがあります）: " + outPath + "\n" + msg : "反映できません: " + msg, o.ExitCode == 2);
+        _status(o.ExitCode == 0 ? Loc.F("Applied", outPath) : o.ExitCode == 1 ? Loc.F("AppliedPartly", outPath, msg) : Loc.F("ApplyFailed", msg), o.ExitCode == 2);
         return o;
     }
 
-    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    /// <summary>タブを閉じたとき: 差分 CSV の読み口を閉じる。</summary>
+    public void Release()
     {
-        base.OnDetachedFromVisualTree(e);
-        _raw?.Dispose();
+        Loc.Changed -= Texts;
+        lock (_rawLock) _raw?.Dispose();
     }
 
     /// <summary>1 行の見た目: 採る・区分・…列…。</summary>
@@ -215,6 +263,7 @@ public sealed class TableDiffView : DockPanel
                 SetColumn(t, i + 1);
                 Children.Add(t);
             }
+            ToolTip.SetTip(_check, Loc.T("TipTakeRow"));
             _check.IsCheckedChanged += (_, _) => { if (_row != null && _check.IsChecked != _row.Taken) _owner.Toggle(_row, _check.IsChecked == true); };
         }
 
@@ -230,7 +279,7 @@ public sealed class TableDiffView : DockPanel
         public static Grid Layout(int n, bool isHeader)
         {
             var g = new Grid { ColumnDefinitions = Columns(Math.Max(5, n)) };
-            g.Children.Add(new TextBlock { Text = isHeader ? "採る" : "" });
+            g.Children.Add(new TextBlock { Text = isHeader ? Loc.T("Take") : "" });
             for (int i = 0; i < Math.Max(5, n); i++)
             {
                 var t = new TextBlock { FontWeight = FontWeight.SemiBold, Margin = new Thickness(4, 0), TextTrimming = TextTrimming.CharacterEllipsis };
@@ -247,7 +296,7 @@ public sealed class TableDiffView : DockPanel
             if (_row == null) return;
             _check.IsChecked = _row.Taken;
             for (int i = 1; i < Children.Count; i++)
-                ((TextBlock)Children[i]).Text = i - 1 < _row.Cells.Length ? _row.Cells[i - 1].Replace('\n', '⏎') : "";
+                ((TextBlock)Children[i]).Text = i - 1 < _row.Cells.Length ? (i == 1 ? Loc.Kind(_row.Cells[0]) : _row.Cells[i - 1].Replace('\n', '⏎')) : "";
             Background = _row.Cells.Length > 0 ? Palette.OfKind(_row.Cells[0]) : null;
         }
     }

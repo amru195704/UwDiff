@@ -15,7 +15,14 @@ namespace UwDiff.UiTests;
 
 public static class TestAppBuilder
 {
-    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App.App>()
+    public static AppBuilder BuildAvaloniaApp()
+    {
+        // 試験では本物の設定（言語）を書き換えない
+        Environment.SetEnvironmentVariable("UWDIFF_SETTINGS", Path.Combine(Path.GetTempPath(), $"uvd-ui-settings-{Environment.ProcessId}"));
+        return Build();
+    }
+
+    private static AppBuilder Build() => AppBuilder.Configure<App.App>()
         .UseSkia()
         .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
         .WithInterFont();
@@ -58,7 +65,7 @@ public class UiTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Shot(Window w, string name)
+    internal static void Shot(Window w, string name)
     {
         w.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
@@ -121,9 +128,9 @@ public class UiTests
         await w.CompareAsync(o, n);
         var v = Current<TableDiffView>(w);
         await WaitUntil(() => v._visible.Length == 4, "差分の行が出ない");   // 変更 2（P1 の X・P3 の備考）・削除 1（P2）・追加 1（P4）
-        v._kind.SelectedItem = "変更";
+        v._kind.SelectedIndex = 3;   // 変更
         await WaitUntil(() => v._visible.Length == 2, "区分で絞れない");
-        v._kind.SelectedItem = "すべて";
+        v._kind.SelectedIndex = 0;   // すべて
         await WaitUntil(() => v._visible.Length == 4, "絞りを戻せない");
         Shot(w, "table");
         // P3 の備考の変更だけ外して反映する
@@ -179,6 +186,85 @@ public class UiTests
         File.AppendAllText(Path.Combine(Shots, "big.txt"), $"{DateTime.Now:s} 比べる {compared} ms・画面に出る {shown} ms・最後の変更へ {jumped - shown} ms・変更 {v._changeRows.Count:N0} か所・最後 旧 {last.OldNo} 行目\n");
         Shot(w, "text_big");
         Assert.NotNull(last.OldNo ?? last.NewNo);
+        w.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task 日本語と英語を切り替える()
+    {
+        Loc.Set(true);
+        string o = Write("lang_old.txt", "a\nb\nc\n"), n = Write("lang_new.txt", "a\nB\nc\n");
+        var w = Open();
+        await w.CompareAsync(o, n);
+        var v = Current<TextDiffView>(w);
+        await WaitUntil(() => v._changeRows.Count == 1, "差分が出ない");
+        Assert.Equal("比べる", w._compare.Content);
+        Assert.Contains("変更 1 か所", v._summary.Text);
+        Assert.Equal("旧と新を比べて、結果を新しいタブで開く", ToolTip.GetTip(w._compare));
+        Shot(w, "lang_ja");
+        Loc.Set(false);
+        await WaitUntil(() => (string?)w._compare.Content == "Compare", "英語にならない");
+        Assert.Contains("1 change(s)", v._summary.Text);
+        Assert.Equal("Compare old and new and open the result in a new tab", ToolTip.GetTip(w._compare));
+        // メニュー: ファイル・ヘルプ（mac 以外は設定・終了・について も入る）
+        var menu = NativeMenu.GetMenu(w)!;
+        Assert.Equal(new[] { "File", "Help" }, menu.Items.OfType<NativeMenuItem>().Select(i => i.Header).ToArray());
+        var file = menu.Items.OfType<NativeMenuItem>().First().Menu!.Items.OfType<NativeMenuItem>().Select(i => i.Header).ToList();
+        Assert.Contains("Command Line…", file);
+        var help = menu.Items.OfType<NativeMenuItem>().Last().Menu!.Items.OfType<NativeMenuItem>().Select(i => i.Header).ToList();
+        Assert.Contains("Command Line Setup…", help);
+        Assert.Contains("GitHub: UwDiff", help);
+        Shot(w, "lang_en");
+        Loc.Set(true);
+        await WaitUntil(() => (string?)w._compare.Content == "比べる", "日本語に戻らない");
+        Assert.Equal("ファイル", NativeMenu.GetMenu(w)!.Items.OfType<NativeMenuItem>().First().Header);
+        w.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task コマンドラインで比べて結果を開く()
+    {
+        Loc.Set(true);
+        string o = Write("cmd old.csv", "点名,X\nP1,1\nP2,2\n"), n = Write("cmd_new.csv", "点名,X\nP1,1.5\nP3,3\n");
+        var w = Open();
+        var c = new CommandLineWindow(w, "");
+        c._args.Text = $"uvd \"{o}\" {n} -key 点名";
+        await c.RunAsync();
+        Assert.Single(w._tabs.Items);
+        var v = Current<TableDiffView>(w);
+        await WaitUntil(() => v._visible.Length == 3, "差分の行が出ない");   // 変更 P1 X・削除 P2・追加 P3
+        // apply は結果のタブを開かず、出力だけ
+        c._args.Text = "--version";
+        await c.RunAsync();
+        Assert.Single(w._tabs.Items);
+        w.Close();
+    }
+
+    [Fact]
+    public void 引数を空白で分ける()
+    {
+        Assert.Equal(new[] { "a b.csv", "c", "-key", "点名,種別" }, CommandLineWindow.Split("\"a b.csv\" c -key 点名,種別"));
+        Assert.Equal(new[] { "x", "", "y" }, CommandLineWindow.Split("x '' y"));
+        Assert.Equal(new[] { "say \"hi\"" }, CommandLineWindow.Split("\"say \\\"hi\\\"\""));
+    }
+
+    [AvaloniaFact]
+    public async Task タブを切り替えても表が読める()
+    {
+        Loc.Set(true);
+        string o = Write("tab_old.csv", "点名,X\n" + string.Concat(Enumerable.Range(1, 300).Select(i => $"P{i},{i}\n")));
+        string n = Write("tab_new.csv", "点名,X\n" + string.Concat(Enumerable.Range(1, 300).Select(i => $"P{i},{(i % 3 == 0 ? i + 1 : i)}\n")));
+        var w = Open();
+        w._key.Text = "点名";
+        await w.CompareAsync(o, n);
+        var t = Current<TableDiffView>(w);
+        await WaitUntil(() => t._visible.Length == 100, "差分の行が出ない");
+        w._key.Text = "";
+        await w.CompareAsync(o, n);        // 2 つめのタブ（テキスト）を開く → 1 つめは画面から外れる
+        Assert.Equal(2, w._tabs.Items.Count);
+        w._tabs.SelectedIndex = 0;         // 戻る
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("変更", t.Row(99)[0]);  // 読み口が閉じられていない
         w.Close();
     }
 

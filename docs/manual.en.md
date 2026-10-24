@@ -25,6 +25,14 @@ No separate .NET installation is needed. To use the CLI from anywhere, add its f
    - "Ignore order" compares which lines were added or removed, regardless of their order.
 3. Click "比べる" (Compare). Each result opens in a tab.
 
+**Menus, language and command line**: on macOS the menu bar has **UwDiff**, **File** and **Help**; on Windows and Linux the same menus are at the top of the window
+(Settings and About are inside File / Help). File: Open Old… (⌘O), Open New…, Compare (⌘Enter), Command Line… (⇧⌘K), Open Result… (a folder written by
+`uvd -result` / `-open`), Close (⌘W), Close All. Help: How to Use, What's New, Contact, GitHub, Command Line Setup….
+**Language**: switch between Japanese and English in Settings… (open tabs switch immediately; the choice is remembered; the first default follows the OS). CLI output stays Japanese.
+**Command Line…** runs `uvd` with the arguments you type and opens comparison results in a new tab (same as `uvd … -open`).
+**Command Line Setup…** makes `uvd` available by name in a terminal (a link in `/usr/local/bin` on macOS / Linux, your user PATH on Windows).
+Hover over buttons and fields to see tooltips.
+
 **Text results**: old on the left, new on the right; removed lines red, added lines green, and changed lines side by side with
 the **changed characters highlighted**. "Changes only" folds unchanged runs (keeping 3 lines of context).
 Previous / next change: buttons or F7 / Shift+F7. Even 10 GB files stay responsive because only the visible lines are read.
@@ -45,6 +53,7 @@ uvd OLD NEW -unordered [-o diff.csv]        compare lines regardless of order
 uvd OLD_DIR NEW_DIR [-o list.csv]           folder comparison
 uvd apply OLD NEW diff.csv -o RESULT        apply a (trimmed) table diff to OLD
 uvd ... -open                               open the result in the GUI (the GUI does not compare again)
+uvd -open                                   open the GUI
 uvd -h                                      all options
 ```
 

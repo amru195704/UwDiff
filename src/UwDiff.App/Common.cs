@@ -105,7 +105,7 @@ public sealed class LineCache
     private string Decode(byte[] b)
     {
         string s = _enc.GetString(b, 0, Math.Min(b.Length, 8000));
-        if (b.Length > 8000) s += " …（長い行の残りは省略）";
+        if (b.Length > 8000) s += Loc.T("LongLine");
         return s.Replace("\t", "    ");
     }
 }
@@ -176,6 +176,15 @@ public static partial class UvdRunner
             _line.Append(value);
         }
     }
+}
+
+/// <summary>
+/// 結果のタブの中身。タブを閉じたとき（と窓を閉じたとき）に Release を呼ぶ。
+/// タブを切り替えるだけでも画面から外れる（OnDetachedFromVisualTree が鳴る）ので、後片付けをそこでしてはいけない。
+/// </summary>
+public interface IResultView
+{
+    void Release();
 }
 
 /// <summary>差分の色（ライト・ダークのどちらでも見えるよう、半透明にする）。</summary>

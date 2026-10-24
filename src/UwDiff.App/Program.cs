@@ -14,6 +14,7 @@ internal static class Program
     public static int Main(string[] args)
     {
         App.StartArgs = args;
+        Loc.Load();
         try
         {
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

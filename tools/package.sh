@@ -11,11 +11,19 @@
 # どれにも LICENSE・LICENSEjp.txt・THIRD-PARTY-NOTICES.md・third-party/ を入れる（mac は .app の Contents/Resources に）。
 # 画面と CLI は同じフォルダに置く（uvd -open が隣の UwDiff を起動するため）。
 #
-# 署名・公証は環境変数があるときだけ（mac: MAC_SIGN_ID・AC_PROFILE）。無ければ未署名で作り、そう表示する。
+# 署名・公証は MAC_SIGN_ID・AC_PROFILE があるときだけ（環境変数か tools/local.env）。無ければ未署名で作り、そう表示する。
 #   MAC_SIGN_ID=<署名 ID> AC_PROFILE=<notarytool のプロファイル名> tools/package.sh osx-arm64
 # 使い方: tools/package.sh [rid...]   既定: osx-arm64 osx-x64 linux-x64 linux-arm64 win-x64 win-arm64
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# 手元だけの設定（署名 ID・公証のプロファイルなど。Git に入れない）。環境変数で渡したものが優先
+if [ -f tools/local.env ]; then
+  _sign="${MAC_SIGN_ID:-}"; _ac="${AC_PROFILE:-}"
+  # shellcheck disable=SC1091
+  . tools/local.env
+  [ -n "$_sign" ] && MAC_SIGN_ID="$_sign"
+  [ -n "$_ac" ] && AC_PROFILE="$_ac"
+fi
 
 VER=$(grep -oE '<InformationalVersion>[^<]+' Directory.Build.props | sed 's/<InformationalVersion>//' | head -1)
 : "${VER:=0.0.0}"

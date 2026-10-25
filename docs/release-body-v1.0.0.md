@@ -1,7 +1,7 @@
 <!--
 パス: UwDiff/docs/release-body-v1.0.0.md（GitHub Releases の本文。下書き・宣伝部 UwDiff宣伝課・2026-10-25）
 - 数字は docs/benchmarks.md（uvd 1.0.0・Mac mini Apple M4・キャッシュを消していない値）だけ。金額・「最速」は書かない。
-- SHA256 は out/dist/SHA256SUMS-1.0.0.txt（2026-10-25 10:02 作成・build 26.10.25.10・b599b06 から）の値。dist を作り直したら差し替える。
+- SHA256 は out/dist/SHA256SUMS-1.0.0.txt の値（build 26.10.25.20・2026-10-25 20:12 に全 6 本を作り直した値。mac の dmg は署名・公証済み。検査の③〜⑥〔ライセンス全文など〕を入れた）。dist を作り直したら差し替える。
 -->
 *日本語 ｜ [English](#uwdiff-v100-first-light-english)*
 
@@ -58,12 +58,12 @@ UwDiff の最初の版です。2つのファイル（または2つのフォル�
 チェックサムは `SHA256SUMS-1.0.0.txt` にあります。
 
 ```
-422f93cff58aa5bc64b4925bf35a9fe52f1db4ffc5d47d40d984cdae71f5c145  UwDiff-1.0.0-linux-aarch64.tar.gz
-83df81bd7e8cd71a7f4df606c6ffc1f650c5e5a1f2ab16e3db009029fa4e84d5  UwDiff-1.0.0-linux-x86_64.tar.gz
-680b083ca606a2121e58d230033504323da8231c48aaf5f9593eb4f43be9ba21  UwDiff-1.0.0-mac-arm64.dmg
-efe4857c701dc6acd5d0c86f170f180b9c996fa8f9b1fe4b3c6e6078a70f8208  UwDiff-1.0.0-mac-x64.dmg
-03f1cf1320d51bf448f99d8df4d975f9d46a83ae12e2d06e06a86e6b14c136f4  UwDiff-1.0.0-win-arm64.zip
-d366e45ab291cd95e9fa8d0bf27f211eeb065bcbd8c1bc9bbffb226c428964f1  UwDiff-1.0.0-win-x64.zip
+72187ec32802616fd05b5e3531909233d357dbf637bb21228642e2dbbb315ac4  UwDiff-1.0.0-linux-aarch64.tar.gz
+2f79466214a5043da59792b3c8f804aae43b5d36346669f70045a1761fd3011e  UwDiff-1.0.0-linux-x86_64.tar.gz
+2d00447edf6ccc0ff625759dfa9a847bec480f926c1fe200f4cd8df501038482  UwDiff-1.0.0-mac-arm64.dmg
+cd9be7a6de5ec2f28a7fc8e6e84fb02f01255d11637592699a32d00bf56c09bd  UwDiff-1.0.0-mac-x64.dmg
+a4da8049e0fc5131ae6d481ee419616eeed4fc370bdab2f865149c84872555f5  UwDiff-1.0.0-win-arm64.zip
+b8137d9a02c735c668efbf0751e2f85e7255fd7f04ad994b630dcd71cd6c340b  UwDiff-1.0.0-win-x64.zip
 ```
 
 ### 📖 使い方とライセンス
@@ -132,12 +132,12 @@ Get the files from **Assets** below: a dmg for the Mac (`arm64` for Apple silico
 Checksums are in `SHA256SUMS-1.0.0.txt`.
 
 ```
-422f93cff58aa5bc64b4925bf35a9fe52f1db4ffc5d47d40d984cdae71f5c145  UwDiff-1.0.0-linux-aarch64.tar.gz
-83df81bd7e8cd71a7f4df606c6ffc1f650c5e5a1f2ab16e3db009029fa4e84d5  UwDiff-1.0.0-linux-x86_64.tar.gz
-680b083ca606a2121e58d230033504323da8231c48aaf5f9593eb4f43be9ba21  UwDiff-1.0.0-mac-arm64.dmg
-efe4857c701dc6acd5d0c86f170f180b9c996fa8f9b1fe4b3c6e6078a70f8208  UwDiff-1.0.0-mac-x64.dmg
-03f1cf1320d51bf448f99d8df4d975f9d46a83ae12e2d06e06a86e6b14c136f4  UwDiff-1.0.0-win-arm64.zip
-d366e45ab291cd95e9fa8d0bf27f211eeb065bcbd8c1bc9bbffb226c428964f1  UwDiff-1.0.0-win-x64.zip
+72187ec32802616fd05b5e3531909233d357dbf637bb21228642e2dbbb315ac4  UwDiff-1.0.0-linux-aarch64.tar.gz
+2f79466214a5043da59792b3c8f804aae43b5d36346669f70045a1761fd3011e  UwDiff-1.0.0-linux-x86_64.tar.gz
+2d00447edf6ccc0ff625759dfa9a847bec480f926c1fe200f4cd8df501038482  UwDiff-1.0.0-mac-arm64.dmg
+cd9be7a6de5ec2f28a7fc8e6e84fb02f01255d11637592699a32d00bf56c09bd  UwDiff-1.0.0-mac-x64.dmg
+a4da8049e0fc5131ae6d481ee419616eeed4fc370bdab2f865149c84872555f5  UwDiff-1.0.0-win-arm64.zip
+b8137d9a02c735c668efbf0751e2f85e7255fd7f04ad994b630dcd71cd6c340b  UwDiff-1.0.0-win-x64.zip
 ```
 
 ### 📖 Manual and license

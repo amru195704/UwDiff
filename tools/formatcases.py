@@ -60,9 +60,11 @@ for ext in TOOLS:
         ok = p.returncode == 1 and body(d) == body(f'{WORK}/{ref}')
         report(f'圧縮 {ext} {tag}', ok, '展開したものどうしと同じ差分' if ok else f'終了コード {p.returncode} {p.stderr.strip()}')
 # 片方だけ圧縮
-d = f'{WORK}/mixed.diff'
-p = run(f'{WORK}/old.txt', f'{WORK}/new.txt.zst', '-o', d)
-report('片方だけ圧縮（旧 そのまま・新 zst）', p.returncode == 1 and body(d) == body(f'{WORK}/plain.diff'))
+if os.path.exists(f'{WORK}/new.txt.zst'):
+    d = f'{WORK}/mixed.diff'
+    p = run(f'{WORK}/old.txt', f'{WORK}/new.txt.zst', '-o', d)
+    report('片方だけ圧縮（旧 そのまま・新 zst）', p.returncode == 1 and body(d) == body(f'{WORK}/plain.diff'))
+else: report('片方だけ圧縮（旧 そのまま・新 zst）', True, '道具が無いので飛ばした')
 
 # 圧縮した CSV の照合
 hdr = ['点名', 'X', '備考']

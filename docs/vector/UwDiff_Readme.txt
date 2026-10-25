@@ -39,7 +39,7 @@ UwDiff は、2 つのファイル（または 2 つのフォルダー）を比�
 ------------------------------------------------------------------------------
   UwDiff.exe                  画面（GUI）本体
   uvd.exe                     コマンド（CLI）
-  third-party\                PdfPig（PDF の読み取り）のライセンス
+  third-party\                同梱している部品のライセンスの全文
   THIRD-PARTY-NOTICES.md      同梱している部品とライセンスの一覧
   UwDiff_Manual_ja.pdf        操作マニュアル（画面・コマンド）
   LICENSE                     ライセンス（正文・英語）

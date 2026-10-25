@@ -136,9 +136,4 @@ public static class OfficeDocumentFile
             : $"{name} is damaged and cannot be read (it is cut short or not in the Word/Excel form)",
         _ => "",
     };
-
-    /// <summary>この版では探さないときの文（製品名だけで有料版を案内する）。</summary>
-    public static string UnsupportedText(string name, bool japanese) => japanese
-        ? $"{name}: Word・Excel・PDF を探すのは有料版（UwView Pro）の機能です"
-        : $"{name}: searching Word, Excel and PDF files is a feature of the paid edition, UwView Pro";
 }

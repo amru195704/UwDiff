@@ -1,0 +1,18 @@
+-- > パス: tools/testdata/duckdb_keydiff.sql.in（bench_compare_mac.sh が @OLD@ @NEW@ @OUT@ @ENC@ を埋めて使う）
+-- 2 つの CSV を全列文字列で読み、点名で突き合わせて「区分,点名,列,旧値,新値」を書く（UwDiff の正解と同じ形）。
+@LOADENC@
+CREATE TEMP TABLE o AS SELECT * FROM read_csv('@OLD@', all_varchar=true, header=true, quote='"', escape='"', @ENC@);
+CREATE TEMP TABLE n AS SELECT * FROM read_csv('@NEW@', all_varchar=true, header=true, quote='"', escape='"', @ENC@);
+COPY (
+  SELECT '削除' AS 区分, o.点名, '' AS 列, '' AS 旧値, '' AS 新値 FROM o ANTI JOIN n USING (点名)
+  UNION ALL
+  SELECT '追加', n.点名, '', '', '' FROM n ANTI JOIN o USING (点名)
+  UNION ALL
+  SELECT '変更', 点名, 列, 旧値, 新値 FROM (
+    SELECT o.点名,
+      unnest(['X','Y','Z','種別','測点番号','観測日','備考']) AS 列,
+      unnest([coalesce(o.X,''),coalesce(o.Y,''),coalesce(o.Z,''),coalesce(o.種別,''),coalesce(o.測点番号,''),coalesce(o.観測日,''),coalesce(o.備考,'')]) AS 旧値,
+      unnest([coalesce(n.X,''),coalesce(n.Y,''),coalesce(n.Z,''),coalesce(n.種別,''),coalesce(n.測点番号,''),coalesce(n.観測日,''),coalesce(n.備考,'')]) AS 新値
+    FROM o JOIN n USING (点名)
+  ) WHERE 旧値 <> 新値
+) TO '@OUT@' (HEADER, DELIMITER ',');

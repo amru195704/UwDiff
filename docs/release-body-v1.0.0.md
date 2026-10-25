@@ -1,7 +1,7 @@
 <!--
 パス: UwDiff/docs/release-body-v1.0.0.md（GitHub Releases の本文。下書き・宣伝部 UwDiff宣伝課・2026-10-25）
 - 数字は docs/benchmarks.md（uvd 1.0.0・Mac mini Apple M4・キャッシュを消していない値）だけ。金額・「最速」は書かない。
-- SHA256 は out/dist/SHA256SUMS.uwdiff（2026-10-25 00:41 作成）の値。4bd63ea（07:54）の前に作った dist なので、作り直したら差し替える。
+- SHA256 は out/dist/SHA256SUMS-1.0.0.txt（2026-10-25 10:02 作成・build 26.10.25.10・b599b06 から）の値。dist を作り直したら差し替える。
 -->
 *日本語 ｜ [English](#uwdiff-v100-first-light-english)*
 
@@ -55,15 +55,15 @@ UwDiff の最初の版です。2つのファイル（または2つのフォル�
 - Windows・Linux: 好きな所に展開。画面（`UwDiff`）と CLI（`uvd`）が並ぶ
 - ターミナルで `uvd` と打つだけで使うには、画面の「ヘルプ」→「コマンドライン設定…」
 
-チェックサムは `SHA256SUMS.uwdiff` にあります。
+チェックサムは `SHA256SUMS-1.0.0.txt` にあります。
 
 ```
-8cee0b084cd368cd745f093904eae59e60646224cceebf31d14ab95c74142e79  UwDiff-1.0.0-linux-aarch64.tar.gz
-6e98db3ba7e7ba148d88e8be1cf763a5daf70197d352840b9575a7f325eb4ab1  UwDiff-1.0.0-linux-x86_64.tar.gz
-92660fab5413e627a3b7b2c43bb811c968e2a422e72e9a5fef73095c1bd89a33  UwDiff-1.0.0-mac-arm64.dmg
-2db1031f871a15359732a8c6f42b918f5f1cb0781d7f6ad48fb9dc033c799c21  UwDiff-1.0.0-mac-x64.dmg
-7dc837c00ebff21bc07e5d9143196c013a67d0d19939eb359fc72f83b55cf0d6  UwDiff-1.0.0-win-arm64.zip
-f1550b2c2f40975095148462a8142eba27636fc0eaa0391e9ca7d3c64cc51035  UwDiff-1.0.0-win-x64.zip
+422f93cff58aa5bc64b4925bf35a9fe52f1db4ffc5d47d40d984cdae71f5c145  UwDiff-1.0.0-linux-aarch64.tar.gz
+83df81bd7e8cd71a7f4df606c6ffc1f650c5e5a1f2ab16e3db009029fa4e84d5  UwDiff-1.0.0-linux-x86_64.tar.gz
+680b083ca606a2121e58d230033504323da8231c48aaf5f9593eb4f43be9ba21  UwDiff-1.0.0-mac-arm64.dmg
+efe4857c701dc6acd5d0c86f170f180b9c996fa8f9b1fe4b3c6e6078a70f8208  UwDiff-1.0.0-mac-x64.dmg
+03f1cf1320d51bf448f99d8df4d975f9d46a83ae12e2d06e06a86e6b14c136f4  UwDiff-1.0.0-win-arm64.zip
+d366e45ab291cd95e9fa8d0bf27f211eeb065bcbd8c1bc9bbffb226c428964f1  UwDiff-1.0.0-win-x64.zip
 ```
 
 ### 📖 使い方とライセンス
@@ -129,15 +129,15 @@ Get the files from **Assets** below: a dmg for the Mac (`arm64` for Apple silico
 - Windows / Linux: extract anywhere; the GUI (`UwDiff`) and the CLI (`uvd`) are side by side
 - To run `uvd` by name in a terminal: Help → Command Line Setup… in the GUI
 
-Checksums are in `SHA256SUMS.uwdiff`.
+Checksums are in `SHA256SUMS-1.0.0.txt`.
 
 ```
-8cee0b084cd368cd745f093904eae59e60646224cceebf31d14ab95c74142e79  UwDiff-1.0.0-linux-aarch64.tar.gz
-6e98db3ba7e7ba148d88e8be1cf763a5daf70197d352840b9575a7f325eb4ab1  UwDiff-1.0.0-linux-x86_64.tar.gz
-92660fab5413e627a3b7b2c43bb811c968e2a422e72e9a5fef73095c1bd89a33  UwDiff-1.0.0-mac-arm64.dmg
-2db1031f871a15359732a8c6f42b918f5f1cb0781d7f6ad48fb9dc033c799c21  UwDiff-1.0.0-mac-x64.dmg
-7dc837c00ebff21bc07e5d9143196c013a67d0d19939eb359fc72f83b55cf0d6  UwDiff-1.0.0-win-arm64.zip
-f1550b2c2f40975095148462a8142eba27636fc0eaa0391e9ca7d3c64cc51035  UwDiff-1.0.0-win-x64.zip
+422f93cff58aa5bc64b4925bf35a9fe52f1db4ffc5d47d40d984cdae71f5c145  UwDiff-1.0.0-linux-aarch64.tar.gz
+83df81bd7e8cd71a7f4df606c6ffc1f650c5e5a1f2ab16e3db009029fa4e84d5  UwDiff-1.0.0-linux-x86_64.tar.gz
+680b083ca606a2121e58d230033504323da8231c48aaf5f9593eb4f43be9ba21  UwDiff-1.0.0-mac-arm64.dmg
+efe4857c701dc6acd5d0c86f170f180b9c996fa8f9b1fe4b3c6e6078a70f8208  UwDiff-1.0.0-mac-x64.dmg
+03f1cf1320d51bf448f99d8df4d975f9d46a83ae12e2d06e06a86e6b14c136f4  UwDiff-1.0.0-win-arm64.zip
+d366e45ab291cd95e9fa8d0bf27f211eeb065bcbd8c1bc9bbffb226c428964f1  UwDiff-1.0.0-win-x64.zip
 ```
 
 ### 📖 Manual and license

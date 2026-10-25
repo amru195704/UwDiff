@@ -6,7 +6,8 @@
 #   UwDiff-<版>-mac-<arm64|x64>.dmg      UwDiff.app（中の Contents/MacOS に画面 UwDiff と CLI uvd）
 #   UwDiff-<版>-linux-<x86_64|aarch64>.tar.gz   UwDiff-<版>/ に UwDiff・uvd
 #   UwDiff-<版>-win-<x64|arm64>.zip      UwDiff-<版>/ に UwDiff.exe・uvd.exe
-#   SHA256SUMS.uwdiff
+#   SHA256SUMS-<版>.txt（版数つきの名前で計算。UwView の dist と同じ名前の付け方）
+#   latest/UwDiff-<mac-arm64.dmg など>・latest/SHA256SUMS・latest/VERSION（6 点が揃ったとき。tools/make_latest.sh）
 # どれにも LICENSE・LICENSEjp.txt・THIRD-PARTY-NOTICES.md・third-party/ を入れる（mac は .app の Contents/Resources に）。
 # 画面と CLI は同じフォルダに置く（uvd -open が隣の UwDiff を起動するため）。
 #
@@ -158,4 +159,7 @@ for rid in "${RIDS[@]}"; do
   esac
 done
 
-(cd "$OUT" && shasum -a 256 "$NAME-$VER"-* > SHA256SUMS.uwdiff && cat SHA256SUMS.uwdiff)
+(cd "$OUT" && shasum -a 256 "$NAME-$VER"-* > "SHA256SUMS-$VER.txt" && echo "SHA256SUMS-$VER.txt:" && cat "SHA256SUMS-$VER.txt")
+
+# 6 点が揃っていれば latest/（版数を外した名前の複製・SHA256SUMS・VERSION）も作る
+tools/make_latest.sh "$VER" "$OUT"

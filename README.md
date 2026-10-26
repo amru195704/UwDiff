@@ -17,7 +17,36 @@
 
 ## 入手
 
-[Releases](https://github.com/amru195704/UwDiff/releases) から、OS に合った配布物（mac は .dmg、Linux は .tar.gz、Windows は .zip）を。
+**パッケージマネージャで入れる**（画面の UwDiff と CLI の `uvd` が両方入ります）
+
+**Mac（Homebrew）**
+```bash
+brew install --cask amru195704/uwview/uwdiff
+```
+**Windows（Scoop）**
+```powershell
+scoop bucket add uwview https://github.com/amru195704/scoop-uwview   # 追加済みなら不要
+scoop install uwdiff
+```
+
+**Windows で Scoop がまだ無いとき（初めて 1 回だけ）**
+「PowerShell」で実行します（コマンドプロンプトではありません）。スタートメニューで「PowerShell」を検索し、**管理者ではない**普通の権限で開きます。行の頭が `PS C:\Users\...>` なら PowerShell です。
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser   # 聞かれたら Y
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression        # Scoop を入れる
+scoop install git                                                        # バケットの追加に git が要る
+```
+このあと上の `scoop bucket add …` と `scoop install uwdiff` を実行します。`Set-ExecutionPolicy` が「見つからない」と出るときは、コマンドプロンプトで打っています。
+**Linux（Snap）**
+```bash
+sudo snap install uwdiff
+```
+Snap では CLI は `uwdiff.uvd` という名前になります（`sudo snap alias uwdiff.uvd uvd` で `uvd` と打てます）。
+
+Homebrew と Scoop は、どちらもこの [Releases](https://github.com/amru195704/UwDiff/releases) の配布物を取ってきて SHA256 を照合します。
+更新は `brew upgrade --cask uwdiff` ／ `scoop update uwdiff` ／ `sudo snap refresh uwdiff`。
+
+**手で入れる**: [Releases](https://github.com/amru195704/UwDiff/releases) から、OS に合った配布物（mac は .dmg、Linux は .tar.gz、Windows は .zip）を。
 .NET を別に入れる必要はありません。
 
 ## 使い方

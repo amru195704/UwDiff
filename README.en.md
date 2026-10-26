@@ -17,7 +17,36 @@
 
 ## Download
 
-Get the package for your OS from [Releases](https://github.com/amru195704/UwDiff/releases) (.dmg for macOS, .tar.gz for Linux, .zip for Windows). No separate .NET installation is needed.
+**With a package manager** (installs both the UwDiff GUI and the `uvd` CLI)
+
+**macOS (Homebrew)**
+```bash
+brew install --cask amru195704/uwview/uwdiff
+```
+**Windows (Scoop)**
+```powershell
+scoop bucket add uwview https://github.com/amru195704/scoop-uwview   # skip if already added
+scoop install uwdiff
+```
+
+**If Scoop is not installed yet on Windows (first time only)**
+Run these in **PowerShell**, not Command Prompt. Search the Start menu for "PowerShell" and open it as a normal user (**not** as administrator). The prompt starts with `PS C:\Users\...>` in PowerShell.
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser   # answer Y if asked
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression        # installs Scoop
+scoop install git                                                        # adding a bucket needs git
+```
+Then run `scoop bucket add …` and `scoop install uwdiff` above. If `Set-ExecutionPolicy` is "not recognized", you are in Command Prompt.
+**Linux (Snap)**
+```bash
+sudo snap install uwdiff
+```
+In the Snap the CLI is called `uwdiff.uvd` (run `sudo snap alias uwdiff.uvd uvd` to type `uvd`).
+
+Homebrew and Scoop both download the packages from these [Releases](https://github.com/amru195704/UwDiff/releases) and check their SHA256.
+Update with `brew upgrade --cask uwdiff` / `scoop update uwdiff` / `sudo snap refresh uwdiff`.
+
+**Manual install**: get the package for your OS from [Releases](https://github.com/amru195704/UwDiff/releases) (.dmg for macOS, .tar.gz for Linux, .zip for Windows). No separate .NET installation is needed.
 
 ## Usage
 

@@ -242,7 +242,7 @@ public class UiTests
         about.Show();
         var texts = about.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         Assert.Contains($"Version {Uvd.Cli.Program.Version}  (build {Uvd.Cli.Program.BuildNumber})", texts);
-        Assert.Contains("What's new (releases)", texts);
+        Assert.Contains("What's new (downloads)", texts);
         Shot(about, "about_en");
         about.Close();
         w._lang.SelectedIndex = 0;
@@ -386,6 +386,21 @@ public class UiTests
         Assert.DoesNotContain(",", mono.Name);
         Assert.True(have.Contains(mono.Name) || mono == Avalonia.Media.FontFamily.Default, mono.Name);
         if (OperatingSystem.IsMacOS()) Assert.Equal("Menlo", mono.Name);
+    }
+
+    [AvaloniaFact]
+    public void ヘルプの使い方などは情報サイトを開く()
+    {
+        foreach (bool ja in new[] { true, false })
+        {
+            Loc.Set(ja);
+            foreach (string u in new[] { Links.HowTo, Links.News, Links.Support })
+            {
+                Assert.StartsWith("https://uvp.y42u.net/", u);
+                Assert.Equal(!ja, u.Contains("/en/"));
+            }
+        }
+        Loc.Set(true);
     }
 
     [AvaloniaFact]

@@ -136,7 +136,7 @@ public static class Loc
         // について
         ["AboutText"] = ("どんな形式・文字コード・OS でも、多数・巨大ファイルを高速に比べる無料の道具。", "A free tool that compares many and huge files fast — any format, any encoding, any OS."),
         ["License"] = ("ライセンス", "License"),
-        ["AboutNews"] = ("最新情報（リリース）", "What's new (releases)"),
+        ["AboutNews"] = ("最新情報（ダウンロード）", "What's new (downloads)"),
         ["AboutHowTo"] = ("使い方（操作マニュアル）", "How to use (user manual)"),
         ["TipLangBox"] = ("画面の言語（日本語・English）。設定… でも切り替えられる", "Display language (Japanese / English). Also in Settings…"),
         // コマンドライン
@@ -258,13 +258,14 @@ public static class Loc
     private static extern ushort GetUserDefaultUILanguage();
 }
 
-/// <summary>ヘルプのリンク先（英語の画面では英語の文書を開く）。</summary>
+/// <summary>ヘルプのリンク先（使い方・最新情報・お問い合わせは UwView情報サイト、GitHub と書いた項目は GitHub。英語の画面では英語のページを開く）。</summary>
 public static class Links
 {
     public const string Repo = "https://github.com/amru195704/UwDiff";
-    public static string HowTo => Loc.Ja ? Repo + "/blob/main/docs/manual.ja.md" : Repo + "/blob/main/docs/manual.en.md";
-    public static string News => Repo + "/releases";
-    public static string Support => Repo + "/issues";
+    public const string Site = "https://uvp.y42u.net";
+    public static string HowTo => Loc.Ja ? Site + "/uwdiff-manual/" : Site + "/en/uwdiff-manual-en/";
+    public static string News => Loc.Ja ? Site + "/uwdiff-download/" : Site + "/en/uwdiff-download-en/";
+    public static string Support => Loc.Ja ? Site + "/support/" : Site + "/en/support-en/";
     public static string RepoHome => Loc.Ja ? Repo : Repo + "/blob/main/README.en.md";
     public static string Profile => Loc.Ja ? "https://github.com/amru195704" : "https://github.com/amru195704/amru195704/blob/main/README.en.md";
     public static string LicenseFile => Loc.Ja ? Repo + "/blob/main/LICENSEjp.txt" : Repo + "/blob/main/LICENSE";

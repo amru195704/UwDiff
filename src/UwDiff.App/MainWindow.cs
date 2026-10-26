@@ -22,7 +22,7 @@ public sealed class MainWindow : Window
     internal readonly TextBox _old = PathBox();
     internal readonly TextBox _new = PathBox();
     internal readonly TextBox _key = new() { Width = 300 };
-    private readonly CheckBox _b = new(), _w = new(), _i = new(), _unordered = new();
+    internal readonly CheckBox _b = new(), _w = new(), _i = new(), _unordered = new();
     internal readonly Button _compare = new() { Classes = { "accent" }, Padding = new Thickness(18, 5) };
     internal readonly TabControl _tabs = new();
     internal readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8, 4) };
@@ -397,7 +397,17 @@ public sealed class MainWindow : Window
         close.Click += (_, _) => Remove(tab);
         _tabs.Items.Add(tab);
         _tabs.SelectedItem = tab;
-        if (string.IsNullOrEmpty(_old.Text)) { _old.Text = pkg.Old; _new.Text = pkg.New; }
+        if (string.IsNullOrEmpty(_old.Text))
+        {
+            // uvd -open などで結果から開いたとき: 比べ直せるよう、比べ方も上の欄に写す
+            _old.Text = pkg.Old;
+            _new.Text = pkg.New;
+            if (pkg.Keys.Count > 0) _key.Text = string.Join(",", pkg.Keys);
+            _b.IsChecked = pkg.IgnoreSpaceChange;
+            _w.IsChecked = pkg.IgnoreAllSpace;
+            _i.IsChecked = pkg.IgnoreCase;
+            _unordered.IsChecked = pkg.Mode == "unordered";
+        }
         // CLI の要約は日本語。英語の画面では、開いたことだけを知らせる（中身の要約は各タブが英語で出す）
         Status(Loc.Ja ? string.Join("\n", pkg.Summary.Take(4)) : Loc.F("ResultOpened", title));
     }

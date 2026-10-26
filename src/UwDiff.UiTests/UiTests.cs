@@ -356,6 +356,39 @@ public class UiTests
     }
 
     [AvaloniaFact]
+    public async Task 結果から開くと比べ方も上の欄に入る()
+    {
+        // uvd -open と同じ: 書き出した結果の置き場所を、別の窓で開く
+        string o = Write("open_old.csv", "id,x\n1,a\n2,b\n");
+        string n = Write("open_new.csv", "id,x\n1,A\n3,c\n");
+        var w = Open();
+        await w.CompareAsync(o, n, new[] { "-key", "id", "-b", "-i" });
+        var v = Current<TableDiffView>(w);
+        await WaitUntil(() => v._visible.Length == 3, "差分の行が出ない");
+        string dir = Path.GetDirectoryName(v._pkg.ResultFile!)!;
+        var w2 = Open();
+        w2.OpenResult(dir);
+        Assert.Equal(o, w2._old.Text);
+        Assert.Equal("id", w2._key.Text);
+        Assert.True(w2._b.IsChecked);
+        Assert.True(w2._i.IsChecked);
+        Assert.False(w2._w.IsChecked);
+        w2.Close();
+        w.Close();
+    }
+
+    [AvaloniaFact]
+    public void 等幅フォントはこの機械にあるものを選ぶ()
+    {
+        // 並べた名前をそのまま渡さない（Linux で 1 つも無いと落ちた）。ある名前か、既定のフォント
+        var mono = Palette.Mono;
+        var have = Avalonia.Media.FontManager.Current.SystemFonts.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Assert.DoesNotContain(",", mono.Name);
+        Assert.True(have.Contains(mono.Name) || mono == Avalonia.Media.FontFamily.Default, mono.Name);
+        if (OperatingSystem.IsMacOS()) Assert.Equal("Menlo", mono.Name);
+    }
+
+    [AvaloniaFact]
     public async Task 比べられないときは理由を出す()
     {
         var w = Open();

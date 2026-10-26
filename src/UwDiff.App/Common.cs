@@ -197,7 +197,30 @@ public static class Palette
     public static readonly IBrush Changed = new SolidColorBrush(Color.Parse("#30E0A020"));
     public static readonly IBrush Fold = new SolidColorBrush(Color.Parse("#20808080"));
     public static readonly IBrush Muted = new SolidColorBrush(Color.Parse("#888888"));
-    public static readonly FontFamily Mono = new("Menlo, Consolas, \"Cascadia Mono\", \"DejaVu Sans Mono\", monospace");
+    /// <summary>
+    /// 本文の等幅フォント。並べた名前のうち、この機械に実際にあるものを 1 つ選ぶ（どれも無ければ画面の既定のフォント）。
+    /// 「Menlo, Consolas, …」のように並べて渡すと、Linux で 1 つも無いときに代わりへ切り替わらず落ちることがあった。
+    /// </summary>
+    public static FontFamily Mono => s_mono ??= PickMono();
+    private static FontFamily? s_mono;
+
+    private static readonly string[] MonoNames =
+    {
+        "Menlo", "Consolas", "Cascadia Mono", "DejaVu Sans Mono", "Liberation Mono", "Noto Sans Mono", "Noto Mono",
+        "Ubuntu Mono", "Source Code Pro", "JetBrains Mono", "Hack", "Noto Sans Mono CJK JP", "FreeMono", "Courier New",
+    };
+
+    private static FontFamily PickMono()
+    {
+        try
+        {
+            var have = new HashSet<string>(FontManager.Current.SystemFonts.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
+            foreach (string n in MonoNames)
+                if (have.Contains(n)) return new FontFamily(n);
+        }
+        catch (Exception) { }   // フォントを数えられない環境: 既定のフォントで出す（落とさない）
+        return FontFamily.Default;
+    }
 
     public static IBrush? OfKind(string kind) => kind switch
     {

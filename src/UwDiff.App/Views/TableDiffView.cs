@@ -24,7 +24,7 @@ public sealed class DiffRow
 /// </summary>
 public sealed class TableDiffView : DockPanel, IResultView
 {
-    private readonly ResultPackage _pkg;
+    internal readonly ResultPackage _pkg;
     private readonly Action<string, bool> _status;
     internal readonly ListBox _list = new();
     /// <summary>区分の絞り込み（並びは KindValues。差分 CSV の区分は日本語なので、値はそのまま、見せる文字だけ訳す）。</summary>
@@ -270,10 +270,10 @@ public sealed class TableDiffView : DockPanel, IResultView
             _check.IsCheckedChanged += (_, _) => { if (_row != null && _check.IsChecked != _row.Taken) _owner.Toggle(_row, _check.IsChecked == true); };
         }
 
-        /// <summary>列の幅: 採る 28・区分 50・（シート・キー…）140・列 120・旧値と新値は残りを半分ずつ。</summary>
+        /// <summary>列の幅: 採る 40・区分 80（英語の Changed・Deleted が切れない幅）・（シート・キー…）140・列 120・旧値と新値は残りを半分ずつ。</summary>
         private static ColumnDefinitions Columns(int n)
         {
-            var parts = new List<string> { "28", "50" };
+            var parts = new List<string> { "40", "80" };
             for (int i = 1; i < n - 3; i++) parts.Add("140");
             parts.AddRange(new[] { "120", "*", "*" });
             return new ColumnDefinitions(string.Join(",", parts));

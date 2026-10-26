@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 
 namespace UwDiff.App;
 
@@ -29,8 +30,14 @@ internal static class Program
     }
 
     public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
+    {
+        AppBuilder b = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
+        // Linux: 既定のフォントを、同梱の Inter にする（フォントが 1 つも無い・fontconfig が既定を返さない環境でも起動できるように。
+        // OS に任せると「Default font family name can't be null or empty」で落ちた）
+        if (OperatingSystem.IsLinux()) b = b.With(new FontManagerOptions { DefaultFamilyName = "fonts:Inter#Inter" });
+        return b;
+    }
 }

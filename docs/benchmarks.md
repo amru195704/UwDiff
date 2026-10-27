@@ -5,7 +5,7 @@
 
 ## 測った環境
 
-- Mac mini（Apple M4・10 コア・メモリ 32GB）、macOS、データは外付け SSD
+- MacBook Air（Apple M4・10 コア・メモリ 32GB）、macOS、データは外付け SSD
 - uvd 1.0.0（.NET 10）。秒は `/usr/bin/time` の real、メモリは maximum resident set size
 - **キャッシュを消していない**値（データを作った直後に続けて実行）。10GB × 2 本はメモリに収まらないので、cold に近い
 - 測り方の決まり: 機種・ストレージを書く／OS をまたいで秒を比べない／1.5 倍未満の違いは「同等」とする

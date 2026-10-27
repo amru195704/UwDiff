@@ -155,7 +155,7 @@ uvd 旧/ 新/ --ignore-file 除外.txt
 
 Word・Excel・PDF は「取り出した文字」の比較です（書式・図・数式は比べない）。古い .doc・.xls、パスワード付き、文字の無い PDF は読めません。
 
-## 6. 速さの目安（実測・Mac mini M4・外付け SSD）
+## 6. 速さの目安（実測・MacBook Air M4・外付け SSD）
 
 | 比べるもの | 時間 |
 |---|---|

@@ -1,6 +1,6 @@
 <!--
 パス: UwDiff/docs/release-body-v1.0.0.md（GitHub Releases の本文。下書き・宣伝部 UwDiff宣伝課・2026-10-25）
-- 数字は docs/benchmarks.md（uvd 1.0.0・Mac mini Apple M4・キャッシュを消していない値）だけ。金額・「最速」は書かない。
+- 数字は docs/benchmarks.md（uvd 1.0.0・MacBook Air Apple M4・キャッシュを消していない値）だけ。金額・「最速」は書かない。
 - SHA256 は out/dist/SHA256SUMS-1.0.0.txt の値（build 26.10.26.16・2026-10-26 16:48 に全 6 本を作り直した値。mac の dmg は署名・公証済み。検査の③〜⑥、Linux のフォントで落ちる不具合などの直し、ヘルプのリンク先を UwView情報サイトにした直しを入れた）。dist を作り直したら差し替える。
 -->
 *日本語 ｜ [English](#uwdiff-v100-first-light-english)*
@@ -38,7 +38,7 @@ UwDiff の最初の版です。2つのファイル（または2つのフォル�
 
 負けも書きます。**ほぼ全行が違う最悪の組**（テキスト 10GB × 2 本）は **110 秒**、行順ばらばらの表をメモリ上限 476MB で比べると **58〜60 秒**です。
 
-条件: Mac mini（Apple M4・10コア・メモリ 32GB）・macOS・外付け SSD／uvd 1.0.0／キャッシュを消していない値（10GB × 2 本はメモリに収まらないので cold に近い）。どれも結果が正解と完全に一致することを確かめたうえでの時間です。全部の表は [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md)。
+条件: MacBook Air（Apple M4・10コア・メモリ 32GB）・macOS・外付け SSD／uvd 1.0.0／キャッシュを消していない値（10GB × 2 本はメモリに収まらないので cold に近い）。どれも結果が正解と完全に一致することを確かめたうえでの時間です。全部の表は [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md)。
 
 ### ⚠️ 注意
 
@@ -112,7 +112,7 @@ The first release of UwDiff. It compares two files (or two folders) and shows wh
 
 Losses too: **the worst case where almost every line differs** (text, 10 GB × 2) takes **110 s**, and shuffled tables with the memory limit at 476 MB take **58 to 60 s**.
 
-Conditions: Mac mini (Apple M4, 10 cores, 32 GB memory), macOS, external SSD / uvd 1.0.0 / cache not cleared (two 10 GB files do not fit in memory, so close to cold). Every time was taken after confirming the result matches the expected answer exactly. Full tables: [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md).
+Conditions: MacBook Air (Apple M4, 10 cores, 32 GB memory), macOS, external SSD / uvd 1.0.0 / cache not cleared (two 10 GB files do not fit in memory, so close to cold). Every time was taken after confirming the result matches the expected answer exactly. Full tables: [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md).
 
 ### ⚠️ Notes
 

@@ -12,7 +12,7 @@
 | **Encodings** | UTF-8, Shift-JIS (CP932), EUC-JP, UTF-16 (with or without BOM), detected automatically; old and new may differ |
 | **Comparisons** | text (order-preserving, unified diff), tables (key columns, **row order may differ**, cell by cell), order-independent lines, folder vs folder |
 | **Apply selected changes** | pick rows of a table diff and write a new file, keeping the old file's encoding, delimiter, line endings and quoting |
-| **Size and speed** | key matching of CSV 10 GB × 2 in about 21 s, text 10 GB × 2 in about 21 s (measured on a Mac mini M4). Spills to temporary files instead of running out of memory |
+| **Size and speed** | key matching of CSV 10 GB × 2 in about 21 s, text 10 GB × 2 in about 21 s (measured on a MacBook Air M4). Spills to temporary files instead of running out of memory |
 | **OS** | macOS, Linux, Windows |
 
 ## Download

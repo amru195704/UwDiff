@@ -126,7 +126,7 @@ Detected automatically (BOM → UTF-16 without BOM → UTF-8 → CP932 / EUC-JP)
 
 Word, Excel and PDF are compared by their extracted text (formatting, images and formulas are not compared).
 
-## 6. Performance (measured on a Mac mini M4 with an external SSD)
+## 6. Performance (measured on a MacBook Air M4 with an external SSD)
 
 | Comparison | Time |
 |---|---|

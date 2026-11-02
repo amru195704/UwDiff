@@ -145,5 +145,34 @@ ok = j['added'] == want_add and j['deleted'] == want_del and got == want and p.r
 print(f'{"○" if ok else "×"} unordered: 追加 {j["added"]}/{want_add}・削除 {j["deleted"]}/{want_del}・中身 {"一致" if got == want else "不一致"}')
 results.append(ok)
 
+# 1.1.0: 先頭から同じ部分を行に切らずに飛ばす。読む塊（64KB → 1MB → 8MB と大きくする）の境目の前後で違うときも、
+# 飛ばさないとき（UVD_NO_PREFIX_SKIP=1）と同じ差分・同じ画面用の索引になり、patch で新に戻ること
+K1, K2 = 64 << 10, (64 << 10) + (1 << 20)   # 1 つ目・2 つ目の塊の終わり
+C = K2 + (8 << 20)                           # 3 つ目の塊（8MB）の終わり
+big = b''.join(b'%09d abcdefghij\n' % i for i in range(1_300_000))   # 約 26MB（塊 3 つ余り）
+bo = os.path.join(WORK, 'prefix_old.txt'); open(bo, 'wb').write(big)
+env0 = dict(os.environ, UVD_NO_PREFIX_SKIP='1')
+for name, data, args in (('64KB の境目の直後', big[:K1 + 2] + b'X' + big[K1 + 3:], ['-U', '50']),
+                         ('1MB の境目の直前', big[:K2 - 1] + b'X' + big[K2:], []),
+                         ('8MB の境目の直後・文脈 0', big[:C + 5] + b'X' + big[C + 6:], ['-U', '0']),
+                         ('8MB の 2 つ目の境目の直後', big[:C + (8 << 20) + 1] + b'X' + big[C + (8 << 20) + 2:], ['-U', '30']),
+                         ('同じ', big, []),
+                         ('後ろに追記', big + b'more\n', []),
+                         ('最後の改行だけ無い', big[:-1], [])):
+    bn = os.path.join(WORK, 'prefix_new.txt'); open(bn, 'wb').write(data)
+    d1, d0 = os.path.join(WORK, 'prefix.diff'), os.path.join(WORK, 'prefix0.diff')
+    r1 = subprocess.run([UVD, bo, bn, '-o', d1, '-q', *args], capture_output=True)
+    r0 = subprocess.run([UVD, bo, bn, '-o', d0, '-q', *args], capture_output=True, env=env0)
+    idx = []
+    for e, rd in ((None, 'prefix_r1'), (env0, 'prefix_r0')):
+        shutil.rmtree(os.path.join(WORK, rd), ignore_errors=True)
+        subprocess.run([UVD, bo, bn, '-result', os.path.join(WORK, rd), '-q'], capture_output=True, env=e)
+        idx.append([open(os.path.join(WORK, rd, f), 'rb').read() for f in ('old.idx', 'new.idx', 'hunks.bin')])
+    same = open(d1, 'rb').read() == open(d0, 'rb').read() and idx[0] == idx[1]
+    c = subprocess.run([sys.executable, '-I', CHECK, bo, bn, d1], capture_output=True, text=True)
+    ok = r1.returncode == r0.returncode and r1.returncode in (0, 1) and same and c.returncode == 0
+    print(f'{"○" if ok else "×"} 先頭の飛ばし（{name}）: 飛ばさないときと{"同じ" if same else "違う"}・{c.stdout.strip()}')
+    results.append(ok)
+
 print('すべて一致' if all(results) else '不一致あり')
 sys.exit(0 if all(results) else 1)

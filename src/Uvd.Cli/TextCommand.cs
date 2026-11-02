@@ -59,6 +59,7 @@ internal static class TextCommand
         if (r.Transcoded) info.WriteLine("  文字コードが違う（または UTF-16 の）ため、UTF-8 にそろえて比べた（差分の行も UTF-8）");
         if (io.IsOffice || inew.IsOffice) info.WriteLine("  Word・Excel・PDF は、取り出した文字を比べた（書式・図・数式は比べない）");
         info.WriteLine(r.Same ? "同じ" : $"削除 {r.DeletedLines:N0} 行／追加 {r.InsertedLines:N0} 行／変更の箇所 {r.Changes:N0}／同じ {r.EqualLines:N0} 行");
+        if (r.SkippedLines > 0) info.WriteLine($"  先頭から同じ {r.SkippedLines:N0} 行（{r.SkippedBytes / 1048576.0:N1} MB）は、行に切らずにバイト列のまま比べて飛ばした");
         if (r.Fallbacks > 0) info.WriteLine($"  目印が見つからず範囲ごと置き換えとして出した所: {r.Fallbacks:N0}（大きく入れ替わった所）");
         info.WriteLine($"時間: {r.Total.TotalSeconds:F2} 秒／目印を探した範囲の最大 {r.PeakWindowLines:N0} 行");
 
@@ -67,7 +68,7 @@ internal static class TextCommand
                 $"\"old\":{J(io.Path)},\"new\":{J(inew.Path)},\"mode\":\"text\",\"oldKind\":{J(io.KindName)},\"newKind\":{J(inew.KindName)}," +
                 $"\"oldEncoding\":{J(r.OldEncoding)},\"newEncoding\":{J(r.NewEncoding)},\"transcoded\":{(r.Transcoded ? "true" : "false")}," +
                 $"\"oldLines\":{r.OldLines},\"newLines\":{r.NewLines},\"equal\":{r.EqualLines},\"deleted\":{r.DeletedLines},\"inserted\":{r.InsertedLines}," +
-                $"\"changes\":{r.Changes},\"hunks\":{hunks},\"fallbacks\":{r.Fallbacks},\"peakWindowLines\":{r.PeakWindowLines},\"totalSec\":{F(r.Total.TotalSeconds)}" + "}\n");
+                $"\"changes\":{r.Changes},\"hunks\":{hunks},\"fallbacks\":{r.Fallbacks},\"peakWindowLines\":{r.PeakWindowLines},\"skippedLines\":{r.SkippedLines},\"totalSec\":{F(r.Total.TotalSeconds)}" + "}\n");
         return r.Same ? 0 : 1;
     }
 
@@ -87,6 +88,9 @@ internal static class TextCommand
     internal static TextDiffOptions Options(CliArgs a, bool recordIndex, Action<long, long>? progress) => new()
     {
         RecordLineIndex = recordIndex,
+        PrefixKeepLines = a.Context,
+        // 試験用: UVD_NO_PREFIX_SKIP=1 で、先頭の同じ部分を飛ばさない（1.0.0 と同じ読み方。速さの比べ用）
+        SkipCommonPrefix = Environment.GetEnvironmentVariable("UVD_NO_PREFIX_SKIP") != "1",
         Compare = new LineCompare
         {
             IgnoreEol = !a.StrictEol,

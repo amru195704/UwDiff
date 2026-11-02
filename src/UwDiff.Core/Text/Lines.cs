@@ -106,11 +106,16 @@ internal sealed class LineProducer
     public long Lines;
     private long _chunkBase;   // いまの塊の Data[0] のストリームの中の位置
 
-    public LineProducer(Stream s, LineCompare cmp, int chunkBytes)
+    /// <param name="startLine">ストリームの先頭が何行目（0 始まり）か。先頭の同じ部分を飛ばしたときはその行数</param>
+    /// <param name="startOffset">ストリームの先頭の、もとの位置（行の位置の索引用）</param>
+    public LineProducer(Stream s, LineCompare cmp, int chunkBytes, long startLine = 0, long startOffset = 0)
     {
         _s = s;
         _cmp = cmp;
         _chunkBytes = chunkBytes;
+        Lines = startLine;
+        _chunkBase = startOffset;
+        BytesRead = startOffset;
     }
 
     public void Run(BlockingCollection<LineChunk> output, CancellationToken ct)
@@ -193,17 +198,19 @@ internal sealed class LineWindow
     private readonly CancellationToken _ct;
 
     /// <summary>先頭の行の行番号（1 始まり）。</summary>
-    public long LineNo { get; private set; } = 1;
+    public long LineNo { get; private set; }
     public int Available => _avail;
     /// <summary>もう取り込む塊が無い（Available が残りのすべて）。</summary>
     public bool Eof => _eof;
     /// <summary>取り込んでいる行のバイト数（見積もり）。</summary>
     public long BufferedBytes { get; private set; }
 
-    public LineWindow(BlockingCollection<LineChunk> q, CancellationToken ct)
+    /// <param name="startLine">先頭の行の行番号（1 始まり）。先頭の同じ部分を飛ばしたときは、飛ばした行数 + 1</param>
+    public LineWindow(BlockingCollection<LineChunk> q, CancellationToken ct, long startLine = 1)
     {
         _q = q;
         _ct = ct;
+        LineNo = startLine;
     }
 
     /// <summary>n 行が使えるようにする（足りなければ終わりまで）。使える行数を返す。</summary>

@@ -44,6 +44,10 @@ public sealed class TextDiffOptions
     public int ChunkBytes { get; init; } = 8 << 20;
     /// <summary>画面のために、行の位置の間引き索引も作る（ファイルをもう一度読まずに済む）。</summary>
     public bool RecordLineIndex { get; init; }
+    /// <summary>先頭から同じ部分を、行に切らずバイト列のまま比べて飛ばす（1.1.0〜）。</summary>
+    public bool SkipCommonPrefix { get; init; } = true;
+    /// <summary>飛ばすとき、違いの手前に残す同じ行の数（unified diff の前の文脈。-U と同じにする）。</summary>
+    public int PrefixKeepLines { get; init; } = 3;
     public Action<long, long>? Progress { get; init; }
 }
 
@@ -59,6 +63,8 @@ public sealed class TextDiffResult
     /// <summary>目印が見つからず、範囲ごと置き換えとして出した回数（大きな違いがある所）。</summary>
     public long Fallbacks;
     public long PeakWindowLines;
+    /// <summary>先頭から同じだったので、行に切らずに飛ばした行数とバイト数（比べたストリームの中で。EqualLines に含む）。</summary>
+    public long SkippedLines, SkippedBytes;
     /// <summary>RecordLineIndex のとき: LineIndex.Every 行ごとの先頭の位置（比べたストリームの中の位置。BOM の後ろから数える）。</summary>
     public long[]? OldLineStarts, NewLineStarts;
     /// <summary>旧・新を読んだまま（変換せず）比べたか。そのときだけ行の位置がファイルの位置と合う。</summary>
@@ -138,10 +144,36 @@ public sealed class TextDiffEngine
         var (sn, _) = OpenWork(new TextSource { Name = newSrc.Name, Open = newSrc.Open, Encoding = en }, Trans);
 
         using var cts = new CancellationTokenSource();
+        long total = oldSrc.Length + newSrc.Length;
+        // 先頭から同じ部分は、行に切らずに飛ばす（行番号・行の位置の索引は飛ばした分から続ける）
+        long skipLines = 0, skipBytes = 0;
+        List<long>? startsA = _o.RecordLineIndex ? new List<long>() : null, startsB = startsA == null ? null : new List<long>();
+        if (_o.SkipCommonPrefix)
+        {
+            try
+            {
+                CommonPrefix.Result p = CommonPrefix.Skip(so, sn, _o.ChunkBytes, _o.PrefixKeepLines, _o.RecordLineIndex,
+                    _o.Progress == null ? null : done => _o.Progress(done, total), cts.Token);
+                so = p.Old;
+                sn = p.New;
+                skipLines = p.Lines;
+                skipBytes = p.Bytes;
+                if (p.LineStarts != null) { startsA!.AddRange(p.LineStarts); startsB!.AddRange(p.LineStarts); }
+            }
+            catch
+            {
+                so.Dispose();
+                sn.Dispose();
+                throw;
+            }
+        }
+        res.EqualLines = skipLines;
+        res.SkippedLines = skipLines;
+        res.SkippedBytes = skipBytes;
         var qa = new BlockingCollection<LineChunk>(3);
         var qb = new BlockingCollection<LineChunk>(3);
-        var pa = new LineProducer(so, cmp, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
-        var pb = new LineProducer(sn, cmp, _o.ChunkBytes) { LineStarts = _o.RecordLineIndex ? new List<long>() : null };
+        var pa = new LineProducer(so, cmp, _o.ChunkBytes, skipLines, skipBytes) { LineStarts = startsA };
+        var pb = new LineProducer(sn, cmp, _o.ChunkBytes, skipLines, skipBytes) { LineStarts = startsB };
         res.OldRaw = !Trans(eo);
         res.NewRaw = !Trans(en);
         Exception? failure = null;
@@ -158,11 +190,10 @@ public sealed class TextDiffEngine
         }
         Thread ta = Start(pa, qa, so, "uvd-lines-old"), tb = Start(pb, qb, sn, "uvd-lines-new");
 
-        var a = new LineWindow(qa, cts.Token);
-        var b = new LineWindow(qb, cts.Token);
+        var a = new LineWindow(qa, cts.Token, skipLines + 1);
+        var b = new LineWindow(qb, cts.Token, skipLines + 1);
         var ca = new TextDiffCursor { W = a };
         var cb = new TextDiffCursor { W = b };
-        long total = oldSrc.Length + newSrc.Length;
         long lastProgress = 0;
         try
         {

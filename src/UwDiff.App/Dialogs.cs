@@ -47,11 +47,14 @@ public static class MessageBox
     }
 }
 
-/// <summary>設定（いまは言語だけ）。</summary>
+/// <summary>設定（言語と、支援の案内を表示しない）。</summary>
 public sealed class SettingsWindow : Window
 {
     private readonly RadioButton _ja = new() { GroupName = "lang" }, _en = new() { GroupName = "lang" };
     private readonly TextBlock _label = new() { FontWeight = FontWeight.SemiBold };
+    /// <summary>支援の案内（帯）を表示しない（帯の［もう表示しない］と同じ記録）。</summary>
+    internal readonly CheckBox _noSupport = new() { Margin = new Thickness(0, 10, 0, 0) };
+    private readonly TextBlock _noSupportNote = new() { TextWrapping = TextWrapping.Wrap, MaxWidth = 420, FontSize = 12, Opacity = 0.75 };
     private readonly Button _close = new() { HorizontalAlignment = HorizontalAlignment.Right, MinWidth = 90 };
 
     public SettingsWindow()
@@ -63,13 +66,19 @@ public sealed class SettingsWindow : Window
         _en.IsChecked = !Loc.Ja;
         _ja.IsCheckedChanged += (_, _) => { if (_ja.IsChecked == true) Loc.Set(true); };
         _en.IsCheckedChanged += (_, _) => { if (_en.IsChecked == true) Loc.Set(false); };
+        _noSupport.IsChecked = Loc.Support.Disabled;
+        _noSupport.IsCheckedChanged += (_, _) =>
+        {
+            Loc.Support.Disabled = _noSupport.IsChecked == true;
+            Loc.SaveSettings();
+        };
         _close.Click += (_, _) => Close();
         Content = new StackPanel
         {
             Margin = new Thickness(24),
             Spacing = 10,
             MinWidth = 320,
-            Children = { _label, _ja, _en, _close },
+            Children = { _label, _ja, _en, _noSupport, _noSupportNote, _close },
         };
         Texts();
         Loc.Changed += Texts;
@@ -84,6 +93,8 @@ public sealed class SettingsWindow : Window
         _en.Content = Loc.T("LangEn");
         ToolTip.SetTip(_ja, Loc.T("TipLanguage"));
         ToolTip.SetTip(_en, Loc.T("TipLanguage"));
+        _noSupport.Content = Loc.T("SupportSetting");
+        _noSupportNote.Text = Loc.T("SupportSettingNote");
         _close.Content = Loc.T("Close");
     }
 }

@@ -36,6 +36,21 @@ public sealed class MainWindow : Window
     private readonly TextBlock _includeLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
     private readonly TextBlock _excludeLabel = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
 
+    // ---- 支援の案内（帯）: 窓の上に出す。モーダルにしない（出ていても比べる・タブの操作はそのままできる） ----
+    internal readonly Border _supportBar = new() { IsVisible = false, Padding = new Thickness(12, 8), Margin = new Thickness(8, 6, 8, 0), CornerRadius = new CornerRadius(6), BorderThickness = new Thickness(1) };
+    internal readonly TextBlock _supportTitle = new() { FontWeight = FontWeight.Bold, TextWrapping = TextWrapping.Wrap };
+    internal readonly TextBlock _supportBody1 = new() { TextWrapping = TextWrapping.Wrap };
+    internal readonly TextBlock _supportBody2 = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.85 };
+    internal readonly TextBlock _supportBody3 = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.85, VerticalAlignment = VerticalAlignment.Center };
+    internal readonly TextBlock _supportReport = new() { Foreground = new SolidColorBrush(Color.Parse("#2F6FDB")), TextDecorations = TextDecorations.Underline, Cursor = new Cursor(StandardCursorType.Hand), Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+    internal readonly Button _supportDonate = new() { Classes = { "accent" } };
+    internal readonly Button _supportLater = new();
+    internal readonly Button _supportNever = new();
+    /// <summary>いま出している帯（出していなければ None）。</summary>
+    internal SupportPromptKind SupportShown { get; private set; }
+    /// <summary>この起動で、もう帯を出すか決めたか（決めるのは起動直後か最初の比較の直後の 1 回だけ）。</summary>
+    private bool _supportDecided;
+
     /// <summary>旧・新がどちらもフォルダか（含める・除くを使えるのはこのときだけ）。</summary>
     internal bool FolderMode => IsDir(_old.Text) && IsDir(_new.Text);
     private static bool IsDir(string? p) => !string.IsNullOrWhiteSpace(p) && Directory.Exists(p.Trim());
@@ -74,9 +89,10 @@ public sealed class MainWindow : Window
             opts.Children.Add(c);
         }
         _compare.Click += async (_, _) => await CompareAsync(_old.Text, _new.Text);
+        BuildSupportBar();
 
         // Windows・Linux は窓の上にメニュー（mac は NativeMenuBar が隠れ、メニューバーに出る）
-        var top = new StackPanel { Children = { _menuBar, paths, opts, _progress } };
+        var top = new StackPanel { Children = { _menuBar, _supportBar, paths, opts, _progress } };
         var root = new DockPanel();
         DockPanel.SetDock(top, Dock.Top);
         DockPanel.SetDock(_status, Dock.Bottom);
@@ -116,7 +132,85 @@ public sealed class MainWindow : Window
             foreach (TabItem t in _tabs.Items.OfType<TabItem>().ToList()) (t.Content as IResultView)?.Release();
             try { Directory.Delete(TempDir, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         };
-        Opened += async (_, _) => await StartAsync(args);
+        Opened += async (_, _) =>
+        {
+            RecordUse();
+            await StartAsync(args);
+            MaybeShowSupport();
+        };
+    }
+
+    // ---- 支援の案内（指示-20261112-06・指示-20261113-06） ----
+
+    private void BuildSupportBar()
+    {
+        _supportBar.Background = new SolidColorBrush(Color.Parse("#1F2F6FDB"));
+        _supportBar.BorderBrush = new SolidColorBrush(Color.Parse("#552F6FDB"));
+        _supportReport.PointerPressed += (_, _) => Links.Open(SupportPrompt.IssuesUrl);
+        ToolTip.SetTip(_supportReport, SupportPrompt.IssuesUrl);
+        ToolTip.SetTip(_supportDonate, SupportPrompt.SponsorsUrl);
+        _supportDonate.Click += (_, _) => SupportChoice(() =>
+        {
+            Links.Open(SupportPrompt.SponsorsUrl);
+            SupportPrompt.MarkSupported(Loc.Support);
+        });
+        _supportLater.Click += (_, _) => SupportChoice(null);   // 出した日は記録済み＝90 日後に 1 回
+        _supportNever.Click += (_, _) => SupportChoice(() => SupportPrompt.MarkNeverShow(Loc.Support));
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 6, 0, 0), Children = { _supportDonate, _supportLater, _supportNever } };
+        var report = new WrapPanel { Orientation = Orientation.Horizontal, Children = { _supportBody3, _supportReport } };
+        _supportBar.Child = new StackPanel { Spacing = 2, Children = { _supportTitle, _supportBody1, _supportBody2, report, buttons } };
+    }
+
+    /// <summary>帯のボタン: 記録を変えて保存し、帯を閉じる。</summary>
+    private void SupportChoice(Action? change)
+    {
+        change?.Invoke();
+        Loc.SaveSettings();
+        HideSupport();
+    }
+
+    internal void HideSupport()
+    {
+        _supportBar.IsVisible = false;
+        SupportShown = SupportPromptKind.None;
+    }
+
+    /// <summary>使った日を数える（同じ日の 2 回目以降は数えない）。手元の設定ファイルだけに書く。</summary>
+    private static void RecordUse()
+    {
+        if (SupportPrompt.RecordUse(Loc.Support, SupportPrompt.Today())) Loc.SaveSettings();
+    }
+
+    /// <summary>
+    /// 帯を出すか決めて、出すなら出す。呼ぶのは起動直後（引数で比べたときはその比較の後）と、比較が終わった直後だけ。
+    /// 1 回の起動で決めるのは 1 回だけ（出す・出さないにかかわらず）。比べている途中には呼ばない。
+    /// </summary>
+    internal void MaybeShowSupport()
+    {
+        if (_supportDecided) return;
+        _supportDecided = true;
+        DateOnly today = SupportPrompt.Today();
+        SupportPromptKind kind = SupportPrompt.Decide(Loc.Support, today);
+        if (kind == SupportPromptKind.None) return;
+        SupportPrompt.MarkShown(Loc.Support, kind, today);   // 出した時点で記録（押さずに終えても［後で］と同じ）
+        Loc.SaveSettings();
+        SupportShown = kind;
+        SupportTexts();
+        _supportBar.IsVisible = true;
+    }
+
+    private void SupportTexts()
+    {
+        bool season = SupportShown == SupportPromptKind.Season;
+        _supportTitle.Text = Loc.T(season ? "SupportSeasonTitle" : "SupportTitle");
+        _supportBody1.Text = Loc.T(season ? "SupportSeasonBody1" : "SupportBody1");
+        _supportBody2.Text = Loc.T("SupportBody2");
+        _supportBody3.Text = Loc.T("SupportBody3");
+        _supportReport.Text = Loc.T("SupportReport");
+        _supportDonate.Content = Loc.T("SupportDonate");
+        _supportLater.Content = Loc.T("SupportLater");
+        _supportNever.Content = Loc.T("SupportNever");
+        ToolTip.SetTip(_supportLater, Loc.T("TipSupportLater"));
     }
 
     private void AddPathRow(Grid g, int row, TextBox box, bool isOld)
@@ -179,6 +273,7 @@ public sealed class MainWindow : Window
         _include.PlaceholderText = Loc.T("IncludePlaceholder");
         _exclude.PlaceholderText = Loc.T("ExcludePlaceholder");
         UpdateFolderMode();
+        SupportTexts();
         if (_lang.SelectedIndex != (Loc.Ja ? 0 : 1)) _lang.SelectedIndex = Loc.Ja ? 0 : 1;
         foreach (TabItem t in _tabs.Items.OfType<TabItem>())
             if (t.Header is StackPanel { Children: [_, Button close] }) ToolTip.SetTip(close, Loc.T("TipCloseTab"));
@@ -254,7 +349,13 @@ public sealed class MainWindow : Window
         // mac のアプリのメニュー（UwDiff について・設定…）は App.Initialize で入れる
     }
 
-    internal void OpenSettings() => _ = new SettingsWindow().ShowDialog(this);
+    internal void OpenSettings() => _ = OpenSettingsAsync();
+
+    private async Task OpenSettingsAsync()
+    {
+        await new SettingsWindow().ShowDialog(this);
+        if (Loc.Support.Disabled) HideSupport();   // 設定で「支援の案内を表示しない」にしたら、出ている帯も閉じる
+    }
 
     /// <summary>コマンドラインの窓（いまの旧・新・比べ方を引数にして開く）。</summary>
     internal void OpenCommandLine()
@@ -368,6 +469,7 @@ public sealed class MainWindow : Window
             _compare.IsEnabled = true;
             _progress.IsVisible = false;
         }
+        MaybeShowSupport();   // 比較が終わった直後（その起動でまだ決めていなければ）
     }
 
     internal void OpenResult(string dir)

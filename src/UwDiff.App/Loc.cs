@@ -139,6 +139,21 @@ public static class Loc
         ["AboutNews"] = ("最新情報（ダウンロード）", "What's new (downloads)"),
         ["AboutHowTo"] = ("使い方（操作マニュアル）", "How to use (user manual)"),
         ["TipLangBox"] = ("画面の言語（日本語・English）。設定… でも切り替えられる", "Display language (Japanese / English). Also in Settings…"),
+        // 支援の案内（帯）。文は宣伝部 UwDiff宣伝課の文案 A-1〜A-5（GeoMediaHub/2-ops/reports/2026-11/2026-11-12-UwDiff_支援の案内_文案.md）。
+        // Pro へのリンクは出さない（2026-10-24 の決定）。金額は書かない
+        ["SupportTitle"] = ("UwDiff をお使いいただき、ありがとうございます", "Thanks for using UwDiff"),
+        ["SupportBody1"] = ("UwDiff は、個人での利用と社内業務での利用なら今後も無料です。", "UwDiff stays free for personal use and internal business use."),
+        ["SupportBody2"] = ("支援は、3 つの OS（Windows・macOS・Linux）での試験、試験に使う大きなデータ、配布の費用に使います。", "Support pays for testing on three OSes (Windows, macOS, Linux), the large test data, and distribution."),
+        ["SupportBody3"] = ("お金でなくても、うまく比べられなかったファイルの報告や、手元の大きなファイルで測った結果が助かります →", "Not money? Reports of files it did not compare well, and measurements from your own large files, help too →"),
+        ["SupportReport"] = ("報告する", "Report"),
+        ["SupportSeasonTitle"] = ("今年もお使いいただき、ありがとうございました", "Thank you for using UwDiff this year"),
+        ["SupportSeasonBody1"] = ("UwDiff は、個人での利用と社内業務での利用なら来年も無料です。今年直したことを uvp のブログにまとめています。", "UwDiff stays free for personal and internal business use next year too. We've summarized this year's changes on the uvp blog."),
+        ["SupportDonate"] = ("支援する（GitHub Sponsors）", "Support (GitHub Sponsors)"),
+        ["SupportLater"] = ("後で", "Later"),
+        ["SupportNever"] = ("もう表示しない", "Don't show again"),
+        ["TipSupportLater"] = ("90 日後にもう一度だけ表示します", "We'll show this once more in 90 days."),
+        ["SupportSetting"] = ("支援の案内を表示しない", "Don't show support messages"),
+        ["SupportSettingNote"] = ("1 か月ほどお使いいただいた後と年末に、画面の上に支援の案内を年 1 回まで表示します。使った日数はこのパソコンの中だけで数え、外部には送りません。", "After about a month of use, and at the end of the year, UwDiff shows a support message at the top of the window at most once a year. Days of use are counted only on this computer and are never sent anywhere."),
         // コマンドライン
         ["CmdTitle"] = ("コマンドライン（uvd）", "Command Line (uvd)"),
         ["CmdHelp"] = ("uvd に渡す引数を入れて「実行」。比べた結果は新しいタブで開く（uvd -open と同じ）。例: 旧.csv 新.csv -key 点名／apply 旧.csv 新.csv 差分.csv -o 結果.csv", "Enter the arguments for uvd and click Run. Comparison results open in a new tab (same as uvd -open). e.g. old.csv new.csv -key ID / apply old.csv new.csv diff.csv -o out.csv"),
@@ -189,10 +204,18 @@ public static class Loc
     }
 
     // ---- 設定ファイル ----
+    /// <summary>settings.json の中身。言語は自分で選んだときだけ書く（選ぶまでは OS の言語に合わせ続ける）。</summary>
     private sealed class Settings
     {
         public string? Language { get; set; }
+        /// <summary>支援の案内（帯）の記録。手元だけで持ち、外部へは送らない（UwView と同じ名前）。</summary>
+        public SupportPromptState SupportBanner { get; set; } = new();
     }
+
+    private static Settings _settings = new();
+
+    /// <summary>支援の案内の記録（変えたら <see cref="SaveSettings"/> で保存する）。</summary>
+    public static SupportPromptState Support => _settings.SupportBanner ??= new();
 
     public static string SettingsFolder => Environment.GetEnvironmentVariable("UWDIFF_SETTINGS") is { Length: > 0 } d ? d
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UwDiff");
@@ -202,24 +225,30 @@ public static class Loc
     /// <summary>起動時に一度: 覚えた言語、無ければ OS の言語。</summary>
     public static void Load()
     {
+        _settings = new Settings();
         try
         {
-            if (File.Exists(SettingsFile) && JsonSerializer.Deserialize<Settings>(File.ReadAllText(SettingsFile)) is { Language: { } l })
-            {
-                Ja = l == "ja";
-                return;
-            }
+            if (File.Exists(SettingsFile) && JsonSerializer.Deserialize<Settings>(File.ReadAllText(SettingsFile)) is { } st)
+                _settings = st;
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }
-        Ja = OsIsJapanese();
+        _settings.SupportBanner ??= new();
+        Ja = _settings.Language is { } l ? l == "ja" : OsIsJapanese();
     }
 
     private static void Save()
     {
+        _settings.Language = Ja ? "ja" : "en";
+        SaveSettings();
+    }
+
+    /// <summary>設定ファイルを書く（言語と支援の案内の記録）。書けなくても止めない。</summary>
+    public static void SaveSettings()
+    {
         try
         {
             Directory.CreateDirectory(SettingsFolder);
-            File.WriteAllText(SettingsFile, JsonSerializer.Serialize(new Settings { Language = Ja ? "ja" : "en" }));
+            File.WriteAllText(SettingsFile, JsonSerializer.Serialize(_settings));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
@@ -270,8 +299,12 @@ public static class Links
     public static string Profile => Loc.Ja ? "https://github.com/amru195704" : "https://github.com/amru195704/amru195704/blob/main/README.en.md";
     public static string LicenseFile => Loc.Ja ? Repo + "/blob/main/LICENSEjp.txt" : Repo + "/blob/main/LICENSE";
 
+    /// <summary>試験用: ブラウザを開かずに URL を受け取る（null なら本当に開く）。</summary>
+    internal static Action<string>? Override { get; set; }
+
     public static void Open(string url)
     {
+        if (Override != null) { Override(url); return; }
         try
         {
             if (OperatingSystem.IsMacOS()) System.Diagnostics.Process.Start("open", url);

@@ -61,6 +61,12 @@ public static class Program
           -enc・-enc-old・-enc-new・-d・-quote は表の比較と同じ
         """;
 
+    /// <summary>
+    /// 支援の案内の 1 行（宣伝部 UwDiff宣伝課の文案 A-4）。--version・--help の最後にだけ標準出力へ出す。
+    /// 差分の出力・終了コード・標準エラーには出さない（patch やスクリプトで使われるため）。uvd の出力は日本語なので日本語の文。
+    /// </summary>
+    internal const string SupportLine = "UwDiff は個人・社内業務での利用なら今後も無料です。支援（任意）: https://github.com/sponsors/amru195704";
+
     private static int Main(string[] args) => Run(args);
 
     /// <summary>
@@ -74,12 +80,14 @@ public static class Program
             if (args.Length == 1 && args[0] is "--version" or "-version")
             {
                 Console.WriteLine($"uvd (UwDiff) {Version} (build {BuildNumber})");
+                Console.WriteLine(SupportLine);
                 return 0;
             }
             CliArgs a = CliArgs.Parse(args);
             if (a.Help)
             {
                 Console.WriteLine(Usage);
+                Console.WriteLine(SupportLine);
                 return 0;
             }
             // uvd -open だけ: 画面を開く（比べるものは画面で選ぶ）

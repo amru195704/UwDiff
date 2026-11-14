@@ -5,7 +5,7 @@
 - 数字は docs/benchmarks.md の「1.1.0」の節の値だけ（条件つき）。「速くなった」とは書かない（オーナー決定 2026-11-03）。金額・「最速」は書かない。
 - 配布物: 2026-11-14 に 6 本（tools/package.sh・ビルド番号 26.11.14.23）。ダウンロードの節と SHA256 は開発部 UwDiff課が足した（out/dist/SHA256SUMS-2.0.0.txt と照合）。リリースは検査課の合格の後。
 -->
-*日本語 ｜ [English](#uwdiff-v200-english)*
+*日本語 ｜ [English](#uwdiff-v200-fixed-star-english)*
 
 ## UwDiff v2.0.0 “Fixed Star”
 

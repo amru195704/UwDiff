@@ -11,7 +11,7 @@
 
 ### ✨ 変わったこと
 
-- **支援の案内**: 1 か月ほど使った後（初めて使った日から 30 日以上・使った日が 10 日以上）と年末（12/15〜1/10）に、画面の上に支援の案内（GitHub Sponsors）を**年 1 回まで**出します。閉じなくても作業できます（モーダルではありません）。［後で］は 90 日後に 1 回だけもう一度、［支援する］［もう表示しない］の後は出しません。設定…の「支援の案内を表示しない」で止められます。**使った日数はこのパソコンの中だけで数え、外部には送りません。**
+- **支援の案内**: 1 か月ほど使った後（初めて使った日から 30 日以上・使った日が 10 日以上）と年末（12/15〜1/10）に、画面の上に支援の案内（GitHub Sponsors）を出します（間は 90 日以上あけます）。閉じなくても作業できます（モーダルではありません）。［後で］は 90 日後に 1 回だけもう一度、［支援する］［もう表示しない］の後は出しません。設定…の「支援の案内を表示しない」で止められます。**使った日数はこのパソコンの中だけで数え、外部には送りません。**
 - `uvd --version`・`uvd -h` の最後に支援の案内を 1 行だけ出します。**差分の出力・終了コード・標準エラーは変わりません。**
 - テキストの比較で、旧と新の**先頭から同じ部分を行に切らずに飛ばす**ようにしました（差分は 1.0.0 とバイト単位で同じ）。先頭から同じ部分が長いファイルでは CPU 時間とメモリが減ります（条件と値: [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md) の「1.1.0」の節）。
 
@@ -43,7 +43,7 @@ c0e5a5b607675c9b05188cc9bab761d29e448041e7e436a75749706f782c66c0  UwDiff-2.0.0-w
 
 ### ✨ What's changed
 
-- **Support message**: after about a month of use (30+ days since first use and 10+ days of use) and at the end of the year (Dec 15 – Jan 10), UwDiff shows a support message (GitHub Sponsors) at the top of the window **at most once a year**. It is not modal — you can keep working. "Later" shows it once more after 90 days; after "Support" or "Don't show again" it is not shown again. Turn it off in Settings… ("Don't show support messages"). **Days of use are counted only on this computer and are never sent anywhere.**
+- **Support message**: after about a month of use (30+ days since first use and 10+ days of use) and at the end of the year (Dec 15 – Jan 10), UwDiff shows a support message (GitHub Sponsors) at the top of the window (at least 90 days apart). It is not modal — you can keep working. "Later" shows it once more after 90 days; after "Support" or "Don't show again" it is not shown again. Turn it off in Settings… ("Don't show support messages"). **Days of use are counted only on this computer and are never sent anywhere.**
 - `uvd --version` and `uvd -h` end with one line about supporting UwDiff. **Diff output, exit codes and standard error are unchanged.**
 - Text comparison now **skips the common leading part** of old and new without splitting it into lines (the diff is byte-for-byte the same as 1.0.0). For files with a long common prefix this reduces CPU time and memory (conditions and numbers: the "1.1.0" section of [docs/benchmarks.md](https://github.com/amru195704/UwDiff/blob/main/docs/benchmarks.md)).
 

@@ -153,7 +153,7 @@ public static class Loc
         ["SupportNever"] = ("もう表示しない", "Don't show again"),
         ["TipSupportLater"] = ("90 日後にもう一度だけ表示します", "We'll show this once more in 90 days."),
         ["SupportSetting"] = ("支援の案内を表示しない", "Don't show support messages"),
-        ["SupportSettingNote"] = ("1 か月ほどお使いいただいた後と年末に、画面の上に支援の案内を年 1 回まで表示します。使った日数はこのパソコンの中だけで数え、外部には送りません。", "After about a month of use, and at the end of the year, UwDiff shows a support message at the top of the window at most once a year. Days of use are counted only on this computer and are never sent anywhere."),
+        ["SupportSettingNote"] = ("1 か月ほどお使いいただいた後と年末に、画面の上に支援の案内を表示します（間は 90 日以上あけます）。使った日数はこのパソコンの中だけで数え、外部には送りません。", "After about a month of use, and at the end of the year, UwDiff shows a support message at the top of the window (at least 90 days apart). Days of use are counted only on this computer and are never sent anywhere."),
         // コマンドライン
         ["CmdTitle"] = ("コマンドライン（uvd）", "Command Line (uvd)"),
         ["CmdHelp"] = ("uvd に渡す引数を入れて「実行」。比べた結果は新しいタブで開く（uvd -open と同じ）。例: 旧.csv 新.csv -key 点名／apply 旧.csv 新.csv 差分.csv -o 結果.csv", "Enter the arguments for uvd and click Run. Comparison results open in a new tab (same as uvd -open). e.g. old.csv new.csv -key ID / apply old.csv new.csv diff.csv -o out.csv"),

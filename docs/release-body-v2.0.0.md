@@ -41,6 +41,8 @@ sudo snap install uwdiff                         # Linux（更新は snap refres
 
 ## UwDiff v2.0.0 “Fixed Star” (English)
 
+*[日本語](#uwdiff-v200-fixed-star) ｜ English*
+
 ### ✨ What's changed
 
 - **Support message**: after about a month of use (30+ days since first use and 10+ days of use) and at the end of the year (Dec 15 – Jan 10), UwDiff shows a support message (GitHub Sponsors) at the top of the window (at least 90 days apart). It is not modal — you can keep working. "Later" shows it once more after 90 days; after "Support" or "Don't show again" it is not shown again. Turn it off in Settings… ("Don't show support messages"). **Days of use are counted only on this computer and are never sent anywhere.**

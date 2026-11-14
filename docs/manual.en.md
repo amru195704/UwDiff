@@ -1,4 +1,4 @@
-# UwDiff User Manual (1.0.0)
+# UwDiff User Manual (2.0.0)
 
 UwDiff is a free tool that compares two files (or two folders) and shows what changed — regardless of format
 (text, CSV, TSV, compressed files, Word, Excel, PDF), character encoding (UTF-8, Shift-JIS/CP932, EUC-JP, UTF-16),
@@ -32,6 +32,7 @@ No separate .NET installation is needed. To use the CLI from anywhere, add its f
 **Language**: switch between Japanese and English in Settings… (open tabs switch immediately; the choice is remembered; the first default follows the OS). CLI output stays Japanese.
 **Command Line…** runs `uvd` with the arguments you type and opens comparison results in a new tab (same as `uvd … -open`).
 **Command Line Setup…** makes `uvd` available by name in a terminal (a link in `/usr/local/bin` on macOS / Linux, your user PATH on Windows).
+**Support message** (since 2.0.0): after about a month of use (30+ days since first use and 10+ days of use) and at the end of the year (Dec 15 – Jan 10), UwDiff shows a support message (GitHub Sponsors) at the top of the window **at most once a year**. It is not modal — you can keep working. "Later" shows it once more after 90 days; after "Support" or "Don't show again" it is not shown again. Turn it off in Settings… ("Don't show support messages"). Days of use are counted only on this computer (in the settings file) and are never sent anywhere. `uvd --version` and `uvd -h` also end with one line about it (diff output, exit codes and standard error are unchanged).
 Hover over buttons and fields to see tooltips.
 
 **Text results**: old on the left, new on the right; removed lines red, added lines green, and changed lines side by side with

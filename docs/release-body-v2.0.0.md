@@ -7,7 +7,7 @@
 -->
 *日本語 ｜ [English](#uwdiff-v200-english)*
 
-## UwDiff v2.0.0
+## UwDiff v2.0.0 “Fixed Star”
 
 ### ✨ 変わったこと
 
@@ -39,7 +39,7 @@ c0e5a5b607675c9b05188cc9bab761d29e448041e7e436a75749706f782c66c0  UwDiff-2.0.0-w
 
 ---
 
-## UwDiff v2.0.0 (English)
+## UwDiff v2.0.0 “Fixed Star” (English)
 
 ### ✨ What's changed
 

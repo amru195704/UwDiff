@@ -6,6 +6,8 @@
 
 > Logs, CSV, Excel or PDF. Shift-JIS or UTF-16. One 10 GB file or a folder of 10,000 files.
 
+📥 **[Download](https://github.com/amru195704/UwDiff/releases/latest)** · 🌐 **[Official site](https://uvp.y42u.net/en/uwdiff-en/)** · 📊 **[All measurements](https://uvp.y42u.net/en/uwdiff-benchmarks-en/)** · 👤 **[Author on GitHub](https://github.com/amru195704)**
+
 | | |
 |---|---|
 | **Formats** | text (logs, CSV, TSV, source), the content of 7 compression formats (gz, bz2, xz, lzma, zst, lz4, br), text of Word (.docx), Excel (.xlsx) and PDF |
@@ -233,6 +235,7 @@ Exit codes follow diff (0 = same, 1 = different, 2 = error). See the [user manua
 | 📖 **Why I built UwDiff** | [Article](https://uvp.y42u.net/en/blog/uwdiff-why-built-en/) |
 | 📖 **Reading the GNU diff and grep source** | [Article](https://uvp.y42u.net/en/blog/uwdiff-gnu-diff-grep-source-en/) |
 | 📖 **A CSV too big for Excel vs last month's version** | [Article](https://uvp.y42u.net/en/blog/uwdiff-excel-csv-monthly-compare-en/) · [Hashnode](https://hugefiles.hashnode.dev/comparing-a-csv-too-big-for-excel-against-last-month-s-version-key-matching-on-10-gb-with-excel-qsv-diff-and-duckdb) |
+| 👤 **Author on GitHub** | [amru195704](https://github.com/amru195704) (UwView, UwDiff, the Homebrew / Scoop / Snap packages and more) |
 | 🔎 **To search and read huge files** | the sister tool [UwView](https://github.com/amru195704/UwView) (search command `uvf` and a GUI) |
 
 ---

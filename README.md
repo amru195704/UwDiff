@@ -6,6 +6,8 @@
 
 > ログでも CSV でも Excel でも PDF でも。Shift-JIS でも UTF-16 でも。1 本 10GB でも、1 万本のフォルダでも。
 
+📥 **[ダウンロード](https://github.com/amru195704/UwDiff/releases/latest)** ・ 🌐 **[公式サイト](https://uvp.y42u.net/uwdiff/)** ・ 📊 **[実測の全データ](https://uvp.y42u.net/uwdiff-benchmarks/)** ・ 👤 **[作者の GitHub](https://github.com/amru195704)**
+
 | | |
 |---|---|
 | **形式** | テキスト（ログ・CSV・TSV・ソース）／圧縮 7 形式（gz・bz2・xz・lzma・zst・lz4・br）の中身／Word（.docx）・Excel（.xlsx）・PDF の文字 |
@@ -238,6 +240,7 @@ uvd apply 旧.csv 新.csv 採る差分.csv -o 結果.csv  # 採った変更だ�
 | 📖 **Shift-JIS と UTF-8 の CSV を比べる** | [記事](https://uvp.y42u.net/blog/uwdiff-sjis-utf8-csv-compare/) ・ [Qiita](https://qiita.com/amru195704/items/df6acc003865eb4bd028) |
 | 📖 **Excel に入らない CSV を先月版と比べる** | [記事](https://uvp.y42u.net/blog/uwdiff-excel-csv-monthly-compare/) |
 | 📝 **note マガジン** | [巨大ファイルを比べる——UwDiff 開発と使い方](https://note.com/amru1957/m/m40e91e68f650) |
+| 👤 **作者の GitHub** | [amru195704](https://github.com/amru195704)（UwView・UwDiff・Homebrew／Scoop／Snap の置き場ほか） |
 | 🔎 **巨大ファイルを探して読むなら** | 姉妹品の [UwView](https://github.com/amru195704/UwView)（検索コマンド `uvf` と画面） |
 
 ---

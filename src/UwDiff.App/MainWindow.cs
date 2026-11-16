@@ -61,6 +61,7 @@ public sealed class MainWindow : Window
 
     public MainWindow(string[] args)
     {
+        Icon = AppIcon.Value;
         Width = 1280;
         Height = 820;
         Directory.CreateDirectory(TempDir);

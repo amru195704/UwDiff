@@ -64,6 +64,7 @@ pack_mac() { # $1=rid $2=arch
   cp "$pub/UwDiff" "$pub/uvd" "$macos/"
   cp -R "$pub/third-party" "$pub/LICENSE" "$pub/LICENSEjp.txt" "$pub/THIRD-PARTY-NOTICES.md" "$res/"
   cp "$pub"/manual.*.md "$res/" 2>/dev/null || true
+  cp src/UwDiff.App/macos/UwDiff.icns "$res/UwDiff.icns"
   chmod +x "$macos/UwDiff" "$macos/uvd"
   cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -73,6 +74,7 @@ pack_mac() { # $1=rid $2=arch
   <key>CFBundleDisplayName</key><string>$NAME</string>
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
   <key>CFBundleExecutable</key><string>UwDiff</string>
+  <key>CFBundleIconFile</key><string>UwDiff.icns</string>
   <key>CFBundleShortVersionString</key><string>$VER</string>
   <key>CFBundleVersion</key><string>$BUILD</string>
   <key>CFBundlePackageType</key><string>APPL</string>

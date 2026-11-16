@@ -10,9 +10,11 @@
     <RootNamespace>UwDiff.App</RootNamespace>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <ApplicationIcon>Assets/Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="UwDiff.UiTests" />
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.0.5" />

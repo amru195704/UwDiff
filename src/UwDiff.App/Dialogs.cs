@@ -22,6 +22,7 @@ public static class MessageBox
         var w = new Window
         {
             Title = "UwDiff",
+            Icon = AppIcon.Value,
             SizeToContent = SizeToContent.WidthAndHeight,
             MaxWidth = 640,
             CanResize = false,
@@ -87,6 +88,7 @@ public sealed class SettingsWindow : Window
 
     private void Texts()
     {
+        Icon ??= AppIcon.Value;
         Title = Loc.T("SettingsTitle");
         _label.Text = Loc.T("Language");
         _ja.Content = Loc.T("LangJa");
@@ -191,6 +193,7 @@ public sealed class CommandLineWindow : Window
 
     private void Texts()
     {
+        Icon ??= AppIcon.Value;
         Title = Loc.T("CmdTitle");
         _run.Content = Loc.T("Run");
         _help.Content = Loc.T("CmdHelpButton");

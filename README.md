@@ -232,7 +232,7 @@ uvd apply 旧.csv 新.csv 採る差分.csv -o 結果.csv  # 採った変更だ�
 | 🏠 **製品ページ** | [UwDiff](https://uvp.y42u.net/uwdiff/)（[English](https://uvp.y42u.net/en/uwdiff-en/)） |
 | 📖 **操作マニュアル** | [docs/manual.ja.md](docs/manual.ja.md) ・ [サイト版](https://uvp.y42u.net/uwdiff-manual/)（[English](https://uvp.y42u.net/en/uwdiff-manual-en/)） |
 | 📊 **実測の全データと条件** | [実測のページ](https://uvp.y42u.net/uwdiff-benchmarks/)（[English](https://uvp.y42u.net/en/uwdiff-benchmarks-en/)）・[docs/benchmarks.md](docs/benchmarks.md)（UwDiff だけの数字・1.1.0 の比較）。**負けている数字もそのまま載せています** |
-| 🧾 **リリースノート** | [v2.0.0](https://github.com/amru195704/UwDiff/releases/tag/v2.0.0)（前の版 [v1.0.0](https://github.com/amru195704/UwDiff/releases/tag/v1.0.0)） |
+| 🧾 **リリースノート** | [v2.0.1](https://github.com/amru195704/UwDiff/releases/tag/v2.0.1)（前の版 [v2.0.0](https://github.com/amru195704/UwDiff/releases/tag/v2.0.0)・[v1.0.0](https://github.com/amru195704/UwDiff/releases/tag/v1.0.0)） |
 | ▶ **動画（YouTube）** | [操作デモ（日本語）](https://www.youtube.com/watch?v=qc1sY8wmOTc) ・ [English](https://www.youtube.com/watch?v=TeDYh7_MsjU) |
 | 📖 **比べる道具を 6 つの軸で選ぶ** | [記事](https://uvp.y42u.net/blog/uwdiff-six-axes/) |
 | 📖 **なぜ UwDiff を作ったか** | [記事](https://uvp.y42u.net/blog/uwdiff-why-built/) |
@@ -253,7 +253,7 @@ uvd apply 旧.csv 新.csv 採る差分.csv -o 結果.csv  # 採った変更だ�
 - **画面**: UwDiff 1.0.0・KDiff3 1.12.6・P4Merge 2026.3・2026-10-27。台本は `tools/bench_gui_mac.sh`。
 - **Beyond Compare・Excel**: 2026-10-23・別の試験データ（参考）。
 - **試験データ**: CSV（列: 点名,X,Y,Z,種別,測点番号,観測日,備考）。新は旧から削除・追加・修正・点名の変更・引用符の中の改行を入れて作る（`tools/testdata/` の生成器・種は固定）。行順 そろっている＝旧と同じ、ばらばら＝全部並べ替え。UTF-8（LF）と CP932（CRLF）。
-- **v2.0.0 も比べる処理は 1.x と同じ**です（2.0.0 で足したのは支援の案内と細かな修正）。
+- **v2.0.0 も比べる処理は 1.x と同じ**です（2.0.0 で足したのは支援の案内と細かな修正、2.0.1 はアプリのアイコン）。
 - 1.5 倍未満の差は「同等」と書いています。
 
 ---

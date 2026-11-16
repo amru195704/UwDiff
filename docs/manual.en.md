@@ -1,4 +1,4 @@
-# UwDiff User Manual (2.0.0)
+# UwDiff User Manual (2.0.1)
 
 UwDiff is a free tool that compares two files (or two folders) and shows what changed — regardless of format
 (text, CSV, TSV, compressed files, Word, Excel, PDF), character encoding (UTF-8, Shift-JIS/CP932, EUC-JP, UTF-16),

@@ -1,4 +1,4 @@
-# UwDiff 操作マニュアル（2.0.0）
+# UwDiff 操作マニュアル（2.0.1）
 
 UwDiff は、2 つのファイル（または 2 つのフォルダ）を比べて、どこが違うかを出す無料の道具です。
 形式（テキスト・CSV・TSV・圧縮ファイル・Word・Excel・PDF）、文字コード（UTF-8・Shift-JIS〔CP932〕・EUC-JP・UTF-16）、

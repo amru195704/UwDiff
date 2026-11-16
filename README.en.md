@@ -229,7 +229,7 @@ Exit codes follow diff (0 = same, 1 = different, 2 = error). See the [user manua
 | 🏠 **Product page** | [UwDiff](https://uvp.y42u.net/en/uwdiff-en/) ([日本語](https://uvp.y42u.net/uwdiff/)) |
 | 📖 **User manual** | [docs/manual.en.md](docs/manual.en.md) · [on the site](https://uvp.y42u.net/en/uwdiff-manual-en/) |
 | 📊 **All measurements and conditions** | [Benchmarks page](https://uvp.y42u.net/en/uwdiff-benchmarks-en/). **Losses are listed as they are** |
-| 🧾 **Release notes** | [v2.0.0](https://github.com/amru195704/UwDiff/releases/tag/v2.0.0) (previous: [v1.0.0](https://github.com/amru195704/UwDiff/releases/tag/v1.0.0)) |
+| 🧾 **Release notes** | [v2.0.1](https://github.com/amru195704/UwDiff/releases/tag/v2.0.1) (previous: [v2.0.0](https://github.com/amru195704/UwDiff/releases/tag/v2.0.0), [v1.0.0](https://github.com/amru195704/UwDiff/releases/tag/v1.0.0)) |
 | ▶ **Video (YouTube)** | [Demo (English)](https://www.youtube.com/watch?v=TeDYh7_MsjU) · [日本語](https://www.youtube.com/watch?v=qc1sY8wmOTc) |
 | 📖 **Choosing a comparison tool on six axes** | [Article](https://uvp.y42u.net/en/blog/uwdiff-six-axes-en/) |
 | 📖 **Why I built UwDiff** | [Article](https://uvp.y42u.net/en/blog/uwdiff-why-built-en/) |
@@ -248,7 +248,7 @@ Exit codes follow diff (0 = same, 1 = different, 2 = error). See the [user manua
 - **GUI**: UwDiff 1.0.0, KDiff3 1.12.6, P4Merge 2026.3, 2026-10-27. Script: `tools/bench_gui_mac.sh`.
 - **Beyond Compare and Excel**: 2026-10-23, different test data (for reference).
 - **Test data**: CSV (columns: ID, X, Y, Z, type, station no., date, note). The new file is made from the old one with deletions, additions, edits, renamed keys and newlines inside quotes (generators in `tools/testdata/`, fixed seed). Same order = as old; shuffled = fully reordered. UTF-8 (LF) and CP932 (CRLF).
-- **v2.0.0 compares exactly as 1.x does** (2.0.0 added a support notice and small fixes).
+- **v2.0.0 compares exactly as 1.x does** (2.0.0 added a support notice and small fixes; 2.0.1 adds the app icon).
 - Differences under 1.5× are called a tie.
 
 ---

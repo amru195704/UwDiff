@@ -21,7 +21,7 @@ scoop install uwdiff                             # Windows（更新は scoop upd
 sudo snap install uwdiff                         # Linux（更新は snap refresh uwdiff）
 ```
 
-手で入れる場合は、このページの下の **Assets** から取ってください。Mac は dmg（Apple シリコン〈M1〜M4〉用の `arm64`・Intel 用の `x64`）、Windows は zip（`x64`・`arm64`）、Linux は tar.gz（`x86_64`・`aarch64`）です。.NET を別に入れる必要はありません。チェックサムは `SHA256SUMS-2.0.0.txt` にあります。
+手で入れる場合は、このページの下の **Assets** から取ってください。Mac は dmg（Apple シリコン〈M1〜M4〉用の `arm64`・Intel 用の `x64`）、Windows は zip（`x64`・`arm64`）、Linux は tar.gz（`x86_64`・`aarch64`）です。.NET を別に入れる必要はありません。チェックサムは `SHA256SUMS-2.0.1.txt` にあります。
 
 ```
 327a9d20ba0a73b19f06b55a0da14bc9e6cd8cf4a50a2004c3ad46c3e3d8cf7b  UwDiff-2.0.1-linux-aarch64.tar.gz
@@ -54,7 +54,7 @@ scoop install uwdiff                             # Windows (update: scoop update
 sudo snap install uwdiff                         # Linux (update: snap refresh uwdiff)
 ```
 
-To install by hand, get the files from **Assets** below: a dmg for the Mac (`arm64` for Apple silicon M1–M4, `x64` for Intel), a zip for Windows (`x64`, `arm64`), a tar.gz for Linux (`x86_64`, `aarch64`). No separate .NET installation is needed. Checksums are in `SHA256SUMS-2.0.0.txt`.
+To install by hand, get the files from **Assets** below: a dmg for the Mac (`arm64` for Apple silicon M1–M4, `x64` for Intel), a zip for Windows (`x64`, `arm64`), a tar.gz for Linux (`x86_64`, `aarch64`). No separate .NET installation is needed. Checksums are in `SHA256SUMS-2.0.1.txt`.
 
 ```
 327a9d20ba0a73b19f06b55a0da14bc9e6cd8cf4a50a2004c3ad46c3e3d8cf7b  UwDiff-2.0.1-linux-aarch64.tar.gz

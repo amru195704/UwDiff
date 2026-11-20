@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Draft: set packageSourceUrl before pushing. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>uwdiff</id>
+    <version>2.0.1</version>
+    <packageSourceUrl>https://github.com/amru195704/TODO-chocolatey-packages</packageSourceUrl>
+    <owners>amru195704</owners>
+    <title>UwDiff</title>
+    <authors>Y4U</authors>
+    <projectUrl>https://github.com/amru195704/UwDiff</projectUrl>
+    <licenseUrl>https://github.com/amru195704/UwDiff/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/amru195704/UwDiff</projectSourceUrl>
+    <docsUrl>https://github.com/amru195704/UwDiff#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/amru195704/UwDiff/issues</bugTrackerUrl>
+    <releaseNotes>https://github.com/amru195704/UwDiff/releases/tag/v2.0.1</releaseNotes>
+    <tags>uwdiff uvd diff compare file-compare folder-compare csv large-files shift-jis</tags>
+    <summary>Compare two files or folders in any format or encoding. GUI plus the uvd command.</summary>
+    <description>Compare two files or folders in any format or encoding (text, CSV/Excel by key, compressed, Word/Excel/PDF text). GUI plus the uvd command.
+
+Free for personal use and internal business use (PolyForm Internal Use License 1.0.0; not open source). This package downloads the official, unmodified release from GitHub Releases.
+</description>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

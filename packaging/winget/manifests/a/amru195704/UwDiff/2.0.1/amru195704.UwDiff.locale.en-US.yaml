@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.9.0.schema.json
+PackageIdentifier: amru195704.UwDiff
+PackageVersion: 2.0.1
+PackageLocale: en-US
+Publisher: Y4U
+PublisherUrl: https://github.com/amru195704
+PublisherSupportUrl: https://github.com/amru195704/UwDiff/issues
+PackageName: UwDiff
+PackageUrl: https://github.com/amru195704/UwDiff
+License: PolyForm Internal Use License 1.0.0
+LicenseUrl: https://github.com/amru195704/UwDiff/blob/main/LICENSE
+ShortDescription: Compare two files or folders in any format or encoding (text, CSV/Excel by key, compressed, Word/Excel/PDF text). GUI plus the uvd command.
+Moniker: uwdiff
+Tags:
+- diff
+- compare
+- file-compare
+- folder-compare
+- csv
+- large-files
+- shift-jis
+ReleaseNotesUrl: https://github.com/amru195704/UwDiff/releases/tag/v2.0.1
+ManifestType: defaultLocale
+ManifestVersion: 1.9.0

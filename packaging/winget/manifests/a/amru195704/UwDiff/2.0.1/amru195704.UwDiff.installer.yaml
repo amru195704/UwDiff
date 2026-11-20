@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
+PackageIdentifier: amru195704.UwDiff
+PackageVersion: 2.0.1
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+- RelativeFilePath: UwDiff-2.0.1\uvd.exe
+  PortableCommandAlias: uvd
+- RelativeFilePath: UwDiff-2.0.1\UwDiff.exe
+  PortableCommandAlias: uwdiff
+ReleaseDate: 2026-11-16
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/amru195704/UwDiff/releases/download/v2.0.1/UwDiff-2.0.1-win-x64.zip
+  InstallerSha256: AE5EC932EF8E11EC17AF400B1C7B02209260980E37FAA6BB8173E717637BFD7E
+- Architecture: arm64
+  InstallerUrl: https://github.com/amru195704/UwDiff/releases/download/v2.0.1/UwDiff-2.0.1-win-arm64.zip
+  InstallerSha256: 96E860B25B654E47F520EADF2F53CE8D7CF0C54F087670BF7A313E9DACBE8283
+ManifestType: installer
+ManifestVersion: 1.9.0

@@ -18,21 +18,42 @@ public sealed class InputFile
     /// <summary>ファイルの大きさ（圧縮なら圧縮したまま）。</summary>
     public long Length { get; init; }
 
-    public bool IsCompressed => Compression != CompressedKind.None;
+    /// <summary>
+    /// 中身を先頭から読む開き方（<see cref="Resolver"/> が返す入力だけが持つ）。あれば <see cref="Path"/> のファイルは開かず、これを読む。
+    /// 中身は圧縮と同じ扱い（行の位置の索引は作らない・画面は中身を取り出して出す）。
+    /// </summary>
+    public Func<Stream>? Content { get; init; }
+    /// <summary><see cref="Content"/> の中身の大きさ（分かっていれば）。</summary>
+    public long? KnownContentLength { get; init; }
+    /// <summary><see cref="Content"/> の中身の名前（表かどうかの見分けに使う）。</summary>
+    public string? ContentName { get; init; }
+    /// <summary><see cref="Content"/> の種類の表示名。</summary>
+    public string? ContentKindName { get; init; }
+    /// <summary><see cref="Content"/> の中身の更新日時（分かっていれば）。</summary>
+    public DateTime? ContentModified { get; init; }
+
+    public bool IsCompressed => Compression != CompressedKind.None || Content != null;
     public bool IsOffice => Office != OfficeKind.None;
 
     /// <summary>中身の名前（圧縮なら拡張子を除いた名前。表かどうかの見分けに使う）。</summary>
-    public string InnerName => IsCompressed ? CompressedFormats.PlainPath(Path, Compression) : Path;
+    public string InnerName => ContentName ?? (IsCompressed ? CompressedFormats.PlainPath(Path, Compression) : Path);
 
     /// <summary>中身が CSV・TSV らしい名前か。</summary>
     public bool LooksTable => System.IO.Path.GetExtension(InnerName).ToLowerInvariant() is ".csv" or ".tsv" or ".tab";
 
     /// <summary>種類の表示名。</summary>
-    public string KindName => IsOffice ? Office switch { OfficeKind.Docx => "Word", OfficeKind.Xlsx => "Excel", _ => "PDF" }
-        : IsCompressed ? CompressedFormats.Name(Compression) + " の中身" : "テキスト";
+    public string KindName => ContentKindName ?? (IsOffice ? Office switch { OfficeKind.Docx => "Word", OfficeKind.Xlsx => "Excel", _ => "PDF" }
+        : IsCompressed ? CompressedFormats.Name(Compression) + " の中身" : "テキスト");
+
+    /// <summary>
+    /// ファイルそのものでない入力（別の入れ物の中身など）を読ませるための差し込み口。既定は無し＝今までどおりファイルを読む。
+    /// 渡された名前を自分が扱うなら <see cref="Content"/> を持つ入力を返し、扱わないなら null を返す。
+    /// </summary>
+    public static Func<string, InputFile?>? Resolver { get; set; }
 
     public static InputFile Probe(string path)
     {
+        if (Resolver?.Invoke(path) is { } resolved) return resolved;
         var fi = new FileInfo(path);
         if (!fi.Exists) throw new FileNotFoundException("ファイルが見つかりません", path);
         OfficeKind office = OfficeText.Check(path);   // 読めない Word・Excel・PDF は OfficeRejectedException
@@ -41,12 +62,12 @@ public sealed class InputFile
     }
 
     /// <summary>中身（展開したもの）を先頭から読むストリーム。Word・Excel・PDF には使わない。</summary>
-    public Stream OpenContent() => IsCompressed
-        ? CompressedFormats.Open(Path, Compression)
+    public Stream OpenContent() => Content != null ? Content()
+        : IsCompressed ? CompressedFormats.Open(Path, Compression)
         : new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.SequentialScan);
 
     /// <summary>中身の大きさの見積もり（圧縮は展開後の見積もり）。</summary>
-    public long ContentLength => IsCompressed ? Math.Max(Length, CompressedInput.GuessPlainSize(Path)) : Length;
+    public long ContentLength => KnownContentLength ?? (IsCompressed ? Math.Max(Length, CompressedInput.GuessPlainSize(Path)) : Length);
 
     /// <summary>テキストとして比べるときの読み方。Word・Excel・PDF は取り出した文字（UTF-8）。</summary>
     public TextSource AsText(FileEncoding? encoding, bool raw = false) => new()
@@ -55,7 +76,7 @@ public sealed class InputFile
         Open = IsOffice ? () => OfficeText.OpenStream(Path, Office, raw) : OpenContent,
         Encoding = IsOffice ? FileEncoding.Utf8 : encoding,
         Length = IsOffice ? Length : ContentLength,
-        Modified = File.GetLastWriteTime(Path),
+        Modified = ContentModified ?? File.GetLastWriteTime(Path),
     };
 }
 

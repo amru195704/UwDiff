@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # > パス: tools/make_vector.sh
 # Vector 投稿用の zip を作る（UwView の dist/vector と同じ作り。Windows x64 だけ）。
-#   out/dist/UwDiff-<版>-win-x64.zip（tools/package.sh が作る）を展開し、
+#   dist/UwDiff-<版>-win-x64.zip（tools/package.sh が作る）を展開し、
 #   ・マークダウンのマニュアルを外し、日本語の操作マニュアルの PDF（UwDiff_Manual_ja.pdf）を入れる
 #   ・Vector の書式の UwDiff_Readme.txt（docs/vector/UwDiff_Readme.txt。UTF-8・BOM 付き）を入れる
 #   ・最上位にフォルダーを作らない平らな zip にまとめる
-# 生成物（out/dist/vector/）:
+# 生成物（dist/vector/）:
 #   UwDiff-<版>-win-x64.zip            投稿する zip
 #   UwDiff-<版>-win-x64/                その中身（確かめ用）
 #   UwDiff_Readme-<版>.txt              Readme（投稿の画面に貼る用）
@@ -17,8 +17,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 NAME=UwDiff
 VER="${1:-$(grep -oE '<InformationalVersion>[^<]+' Directory.Build.props | sed 's/<InformationalVersion>//' | head -1)}"
-SRC="out/dist/$NAME-$VER-win-x64.zip"
-V="out/dist/vector"
+SRC="dist/$NAME-$VER-win-x64.zip"
+V="dist/vector"
 D="$V/$NAME-$VER-win-x64"
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 [ -f "$SRC" ] || { echo "$SRC がありません（先に tools/package.sh win-x64）" >&2; exit 1; }

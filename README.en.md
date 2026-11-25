@@ -261,7 +261,7 @@ Requires the .NET 10 SDK.
 dotnet build -c Release
 src/Uvd.Cli/bin/Release/net10.0/uvd -h          # CLI
 dotnet run -c Release --project src/UwDiff.App  # GUI
-tools/package.sh osx-arm64                      # packages (out/dist/)
+./dist.sh                                       # packages (Mac only → dist-test/; all six: ./dist.sh all → dist/)
 tools/run_tests.sh                              # tests
 ```
 

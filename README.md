@@ -266,7 +266,7 @@ uvd apply 旧.csv 新.csv 採る差分.csv -o 結果.csv  # 採った変更だ�
 dotnet build -c Release
 src/Uvd.Cli/bin/Release/net10.0/uvd -h          # CLI
 dotnet run -c Release --project src/UwDiff.App  # 画面
-tools/package.sh osx-arm64                      # 配布物（out/dist/）
+./dist.sh                                       # 配布物（Mac だけ → dist-test/。全部は ./dist.sh all → dist/）
 ```
 
 ## 構成

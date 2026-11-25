@@ -7,3 +7,7 @@ out/
 tools/local.env
 .DS_Store
 __pycache__/
+
+# 配布物の出力（発売物＝dist/・試験の物＝dist-test/。入口は ./dist.sh）
+dist/
+dist-test/

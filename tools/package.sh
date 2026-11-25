@@ -2,7 +2,7 @@
 # > パス: tools/package.sh
 # UwDiff の配布物を作る（mac / Linux / Windows）。UwView の build/publish.sh と同じ作り。
 #
-# 生成物（out/dist/）:
+# 生成物（dist/。試験の物は OUT=dist-test。入口はリポ直下の dist.sh）:
 #   UwDiff-<版>-mac-<arm64|x64>.dmg      UwDiff.app（中の Contents/MacOS に画面 UwDiff と CLI uvd）
 #   UwDiff-<版>-linux-<x86_64|aarch64>.tar.gz   UwDiff-<版>/ に UwDiff・uvd
 #   UwDiff-<版>-win-<x64|arm64>.zip      UwDiff-<版>/ に UwDiff.exe・uvd.exe
@@ -32,7 +32,7 @@ NAME=UwDiff
 export UVD_BUILD_NUMBER="${UVD_BUILD_NUMBER:-$(date '+%y.%m.%d.%H')}"
 BUILD="${UVD_BUILD_NUMBER}"
 BUNDLE_ID="${BUNDLE_ID:-net.y42u.uwdiff}"
-OUT="${OUT:-out/dist}"
+OUT="${OUT:-dist}"
 RIDS=("$@"); [ ${#RIDS[@]} -eq 0 ] && RIDS=(osx-arm64 osx-x64 linux-x64 linux-arm64 win-x64 win-arm64)
 mkdir -p "$OUT"
 echo "$NAME $VER (build $BUILD) → ${RIDS[*]}"

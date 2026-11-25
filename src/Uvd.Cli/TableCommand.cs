@@ -47,7 +47,7 @@ internal static class TableCommand
     {
         long lastShown = 0;
         var sw = Stopwatch.StartNew();
-        Func<Stream>? Open(InputFile f) => f.IsOffice ? () => OfficeText.OpenStream(f.Path, f.Office, a.Raw) : f.IsCompressed ? f.OpenContent : null;
+        Func<Stream>? Open(InputFile f) => f.IsOffice ? () => OfficeText.OpenStream(f.Source, f.Office, a.Raw) : f.IsCompressed ? f.OpenContent : null;
         return new KeyedDiffEngine(new KeyedDiffOptions
         {
             OldPath = sheetPaths?.Old ?? io.Path,
@@ -93,7 +93,7 @@ internal static class TableCommand
         try
         {
             List<(string Sheet, string Path)> Sheets(InputFile f) => f.Office == OfficeKind.Xlsx
-                ? ExcelSheets.Split(f.Path, a.Raw, NewTemp)
+                ? ExcelSheets.Split(f.Source, a.Raw, NewTemp)
                 : throw new ArgumentException("Excel と CSV・TSV の照合は、まだできません。Excel を CSV で保存してから比べてください");
             var so = Sheets(io);
             var sn = Sheets(inew);

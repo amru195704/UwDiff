@@ -29,7 +29,7 @@ public sealed class DisplayFile
         if (f.IsOffice || f.IsCompressed)
         {
             file = System.IO.Path.Combine(tempDir, $"view-{Guid.NewGuid():N}.txt");
-            using Stream src = f.IsOffice ? OfficeText.OpenStream(path, f.Office, raw) : f.OpenContent();
+            using Stream src = f.IsOffice ? OfficeText.OpenStream(f.Source, f.Office, raw) : f.OpenContent();
             using var dst = new FileStream(file, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 20);
             src.CopyTo(dst, 1 << 20);
             temp = true;

@@ -13,6 +13,13 @@ namespace UwDiff.Core;
 public sealed class InputFile
 {
     public required string Path { get; init; }
+    /// <summary>
+    /// 中身を実際に開く場所（省けば <see cref="Path"/>）。<see cref="Path"/> は名前（表示・種類や区切りの見分け）に使い、開くのはこちら。
+    /// <see cref="Resolver"/> が、名前と開く場所の違う入力を返すときに使う。
+    /// </summary>
+    public string? OpenPath { get; init; }
+    /// <summary>開く場所（<see cref="OpenPath"/> が無ければ <see cref="Path"/>）。</summary>
+    public string Source => OpenPath ?? Path;
     public CompressedKind Compression { get; init; }
     public OfficeKind Office { get; init; }
     /// <summary>ファイルの大きさ（圧縮なら圧縮したまま）。</summary>
@@ -63,17 +70,17 @@ public sealed class InputFile
 
     /// <summary>中身（展開したもの）を先頭から読むストリーム。Word・Excel・PDF には使わない。</summary>
     public Stream OpenContent() => Content != null ? Content()
-        : IsCompressed ? CompressedFormats.Open(Path, Compression)
-        : new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.SequentialScan);
+        : IsCompressed ? CompressedFormats.Open(Source, Compression)
+        : new FileStream(Source, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, FileOptions.SequentialScan);
 
     /// <summary>中身の大きさの見積もり（圧縮は展開後の見積もり）。</summary>
-    public long ContentLength => KnownContentLength ?? (IsCompressed ? Math.Max(Length, CompressedInput.GuessPlainSize(Path)) : Length);
+    public long ContentLength => KnownContentLength ?? (IsCompressed ? Math.Max(Length, CompressedInput.GuessPlainSize(Source)) : Length);
 
     /// <summary>テキストとして比べるときの読み方。Word・Excel・PDF は取り出した文字（UTF-8）。</summary>
     public TextSource AsText(FileEncoding? encoding, bool raw = false) => new()
     {
         Name = Path,
-        Open = IsOffice ? () => OfficeText.OpenStream(Path, Office, raw) : OpenContent,
+        Open = IsOffice ? () => OfficeText.OpenStream(Source, Office, raw) : OpenContent,
         Encoding = IsOffice ? FileEncoding.Utf8 : encoding,
         Length = IsOffice ? Length : ContentLength,
         Modified = ContentModified ?? File.GetLastWriteTime(Path),
